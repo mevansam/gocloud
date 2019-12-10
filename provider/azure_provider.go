@@ -16,6 +16,8 @@ import (
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
+
+	forms_config "github.com/mevansam/gocloud/forms"
 )
 
 type azureProvider struct {
@@ -73,7 +75,7 @@ func newAzureProvider() (CloudProvider, error) {
 func (p *azureProvider) createAzureInputForm() error {
 
 	// Do not recreate form template if it exists
-	clougConfig := CloudConfigForms
+	clougConfig := forms_config.CloudConfigForms
 	if clougConfig.HasGroup(p.name) {
 		return nil
 	}
@@ -90,7 +92,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		rr[i] = r.Name
 	}
 
-	form = CloudConfigForms.NewGroup(p.name, "Microsoft Azure Cloud Computing Platform")
+	form = forms_config.CloudConfigForms.NewGroup(p.name, "Microsoft Azure Cloud Computing Platform")
 
 	if field, err = form.NewInputFieldWithDefaultValue(
 		/* name */ "environment",
@@ -231,7 +233,7 @@ func (p *azureProvider) InputForm() (forms.InputForm, error) {
 	)
 
 	// Bind Azure configuration data instance to input form
-	form := CloudConfigForms.Group(p.name)
+	form := forms_config.CloudConfigForms.Group(p.name)
 	providerConfig = p.cloudProvider.
 		config.(*azureProviderConfig)
 

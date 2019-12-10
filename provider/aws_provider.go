@@ -10,6 +10,8 @@ import (
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+
+	forms_config "github.com/mevansam/gocloud/forms"
 )
 
 type awsProvider struct {
@@ -50,7 +52,7 @@ func newAWSProvider() (CloudProvider, error) {
 func (p *awsProvider) createAWSInputForm() error {
 
 	// Do not recreate form template if it exists
-	clougConfig := CloudConfigForms
+	clougConfig := forms_config.CloudConfigForms
 	if clougConfig.HasGroup(p.name) {
 		return nil
 	}
@@ -67,7 +69,7 @@ func (p *awsProvider) createAWSInputForm() error {
 		rr[i] = r.Name
 	}
 
-	form = CloudConfigForms.NewGroup(p.name, "Amazon Web Services Cloud Platform")
+	form = forms_config.CloudConfigForms.NewGroup(p.name, "Amazon Web Services Cloud Platform")
 
 	if _, err = form.NewInputGroupField(
 		/* name */ "access_key",
@@ -143,7 +145,7 @@ func (p *awsProvider) InputForm() (forms.InputForm, error) {
 	)
 
 	// Bind AWS configuration data instance to input form
-	form := CloudConfigForms.Group(p.name)
+	form := forms_config.CloudConfigForms.Group(p.name)
 	providerConfig = p.cloudProvider.
 		config.(*awsProviderConfig)
 

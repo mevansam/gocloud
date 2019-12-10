@@ -7,11 +7,9 @@ import (
 
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/goforms/config"
-	"github.com/mevansam/goforms/forms"
-)
 
-// Collection of input forms for supported clouds
-var CloudConfigForms = forms.NewInputCollection()
+	forms_config "github.com/mevansam/gocloud/forms"
+)
 
 // user agent to use for HTTP(s) API requests
 const httpUserAgent = `cloud-builder`
@@ -96,7 +94,7 @@ func (p *cloudProvider) Name() string {
 }
 
 func (p *cloudProvider) Description() string {
-	return CloudConfigForms.Group(p.name).Description()
+	return forms_config.CloudConfigForms.Group(p.name).Description()
 }
 
 func (p *cloudProvider) Reset() {

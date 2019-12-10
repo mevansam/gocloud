@@ -13,6 +13,8 @@ import (
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
+
+	forms_config "github.com/mevansam/gocloud/forms"
 )
 
 type googleProvider struct {
@@ -85,7 +87,7 @@ func newGoogleProvider() (CloudProvider, error) {
 func (p *googleProvider) createGoogleInputForm() error {
 
 	// Do not recreate form template if it exists
-	clougConfig := CloudConfigForms
+	clougConfig := forms_config.CloudConfigForms
 	if clougConfig.HasGroup(p.name) {
 		return nil
 	}
@@ -102,7 +104,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 		rr[i] = r.Name
 	}
 
-	form = CloudConfigForms.NewGroup(p.name, "Google Cloud Platform")
+	form = forms_config.CloudConfigForms.NewGroup(p.name, "Google Cloud Platform")
 
 	form.NewInputContainer(
 		/* name */ "authentication",
@@ -211,7 +213,7 @@ func (p *googleProvider) InputForm() (forms.InputForm, error) {
 	)
 
 	// Bind Google configuration data instance to input form
-	form := CloudConfigForms.Group(p.name)
+	form := forms_config.CloudConfigForms.Group(p.name)
 	providerConfig = p.config.(*googleProviderConfig)
 
 	field, _ = form.GetInputField("credentials")
