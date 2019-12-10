@@ -6,7 +6,7 @@ import (
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/gocloud/provider"
 
-	config_mocks "github.com/mevansam/goutils/config/mocks"
+	config_mocks "github.com/mevansam/goforms/config/mocks"
 )
 
 type FakeCloudProvider struct {

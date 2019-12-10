@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"github.com/mevansam/gocloud/cloud"
-	"github.com/mevansam/goutils/config"
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/config"
+	"github.com/mevansam/goforms/forms"
 )
 
 // Collection of input forms for supported clouds

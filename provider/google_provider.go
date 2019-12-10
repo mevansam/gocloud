@@ -10,8 +10,8 @@ import (
 	compute "google.golang.org/api/compute/v1"
 
 	"github.com/mevansam/gocloud/cloud"
-	"github.com/mevansam/goutils/config"
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/config"
+	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
 )
 

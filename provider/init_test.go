@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mevansam/goutils/config"
+	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goutils/logger"
 
 	. "github.com/onsi/ginkgo"

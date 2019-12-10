@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/mevansam/gocloud/provider"
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
-	"github.com/mevansam/goutils/ux"
+	"github.com/mevansam/goforms/ux"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

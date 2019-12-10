@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 
 	"github.com/mevansam/gocloud/provider"
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
 
 	. "github.com/onsi/ginkgo"

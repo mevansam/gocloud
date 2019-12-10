@@ -8,8 +8,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/mevansam/gocloud/cloud"
-	"github.com/mevansam/goutils/config"
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/config"
+	"github.com/mevansam/goforms/forms"
 )
 
 type awsProvider struct {

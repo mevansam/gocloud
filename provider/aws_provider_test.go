@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
-	"github.com/mevansam/goutils/ux"
+	"github.com/mevansam/goforms/ux"
 	"github.com/mevansam/gocloud/provider"
 
 	. "github.com/onsi/ginkgo"

@@ -13,9 +13,9 @@ import (
 
 	compute "google.golang.org/api/compute/v1"
 
-	"github.com/mevansam/goutils/forms"
-	"github.com/mevansam/goutils/logger"
 	"github.com/mevansam/gocloud/provider"
+	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/logger"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

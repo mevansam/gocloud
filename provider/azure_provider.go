@@ -13,8 +13,8 @@ import (
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/google/uuid"
 	"github.com/mevansam/gocloud/cloud"
-	"github.com/mevansam/goutils/config"
-	"github.com/mevansam/goutils/forms"
+	"github.com/mevansam/goforms/config"
+	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
 )
 
