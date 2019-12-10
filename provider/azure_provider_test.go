@@ -69,7 +69,7 @@ var _ = Describe("Azure Provider Tests", func() {
 			test_helpers.DeleteAzureResourceGroup(azureDefaultResourceGroup)
 		})
 
-		FIt("creates the default resource group and storage account", func() {
+		It("creates the default resource group and storage account", func() {
 
 			// Connect provider to Azure service
 			err = azureProvider.Connect()
