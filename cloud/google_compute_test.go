@@ -99,6 +99,8 @@ var _ = Describe("Google Compute Tests", func() {
 			state, err := instance0.State()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state).To(Equal(cloud.StateRunning))
+			Expect(instance0.CanConnect(22)).To(BeTrue())
+			Expect(instance0.CanConnect(23)).To(BeFalse())
 
 			err = instance0.Stop()
 			Expect(err).NotTo(HaveOccurred())
@@ -106,6 +108,7 @@ var _ = Describe("Google Compute Tests", func() {
 			state, err = instance0.State()
 			Expect(err).NotTo(HaveOccurred())
 			Expect(state).To(Equal(cloud.StateStopped))
+			Expect(instance0.CanConnect(22)).To(BeFalse())
 
 			googleState := test_helpers.GoogleInstanceState(instance0.Name())
 			Expect(googleState).To(Equal("TERMINATED"))

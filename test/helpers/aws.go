@@ -68,8 +68,8 @@ func CleanUpAWSTestData() {
 	var (
 		err error
 
-		sess           *session.Session
-		describeResult *ec2.DescribeInstancesOutput
+		sess            *session.Session
+		instancesResult *ec2.DescribeInstancesOutput
 	)
 
 	if noCleanUp := os.Getenv("AWS_NO_CLEANUP"); noCleanUp != "1" {
@@ -85,7 +85,7 @@ func CleanUpAWSTestData() {
 		Expect(err).NotTo(HaveOccurred())
 		svc := ec2.New(sess)
 
-		describeResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
+		instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 			Filters: []*ec2.Filter{
 				&ec2.Filter{
 					Name:   aws.String("tag:Role"),
@@ -105,9 +105,9 @@ func CleanUpAWSTestData() {
 		})
 		Expect(err).NotTo(HaveOccurred())
 
-		if describeResult.Reservations != nil {
+		if instancesResult.Reservations != nil {
 
-			for _, r := range describeResult.Reservations {
+			for _, r := range instancesResult.Reservations {
 
 				logger.TraceMessage(
 					"Terminating test instance with ID '%s'.",
@@ -155,13 +155,14 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]string {
 			defer GinkgoRecover()
 
 			var (
-				describeResult *ec2.DescribeInstancesOutput
-				runResult      *ec2.Reservation
-				instance       *ec2.Instance
+				instancesResult *ec2.DescribeInstancesOutput
+				secGroupsResult *ec2.DescribeSecurityGroupsOutput
+				runResult       *ec2.Reservation
+				instance        *ec2.Instance
 			)
 			vmName := fmt.Sprintf("%s-%d", name, i)
 
-			describeResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
+			instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 				Filters: []*ec2.Filter{
 					&ec2.Filter{
 						Name:   aws.String("tag:Name"),
@@ -181,7 +182,7 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]string {
 			})
 			Expect(err).NotTo(HaveOccurred())
 
-			if describeResult.Reservations == nil || len(describeResult.Reservations) == 0 {
+			if instancesResult.Reservations == nil || len(instancesResult.Reservations) == 0 {
 
 				logger.TraceMessage(
 					"Creating instance with name '%s'.",
@@ -215,7 +216,7 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]string {
 
 			} else {
 
-				instance = (*describeResult.Reservations[0]).Instances[0]
+				instance = (*instancesResult.Reservations[0]).Instances[0]
 				switch *instance.State.Name {
 				case "running":
 					// Continue as normal
@@ -238,6 +239,43 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]string {
 				}
 			}
 
+			secGroupsResult, err = svc.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+				GroupIds: []*string{(*instance.SecurityGroups[0]).GroupId},
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			hasSSHIngress := false
+			for _, secGroup := range secGroupsResult.SecurityGroups {
+				for _, ipPermission := range secGroup.IpPermissions {
+					if ipPermission.ToPort != nil && *ipPermission.ToPort == int64(22) {
+						for _, ipRange := range ipPermission.IpRanges {
+							if ipRange.CidrIp != nil && *ipRange.CidrIp == "0.0.0.0/0" {
+								hasSSHIngress = true
+								break
+							}
+						}
+					}
+				}
+			}
+			if !hasSSHIngress {
+				_, err = svc.AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
+					GroupId: (*instance.SecurityGroups[0]).GroupId,
+					IpPermissions: []*ec2.IpPermission{
+						{
+							FromPort:   aws.Int64(22),
+							IpProtocol: aws.String("tcp"),
+							IpRanges: []*ec2.IpRange{
+								{
+									CidrIp:      aws.String("0.0.0.0/0"),
+									Description: aws.String("SSH access from the world"),
+								},
+							},
+							ToPort: aws.Int64(22),
+						},
+					},
+				})
+			}
+
 			logger.TraceMessage(
 				"Using instance: ID - %s, name - %s",
 				*instance.InstanceId, vmName)
@@ -255,7 +293,7 @@ func awsWaitUntilInstanceRunning(svc *ec2.EC2, instanceID *string) *ec2.Instance
 	var (
 		err error
 
-		describeResult *ec2.DescribeInstancesOutput
+		instancesResult *ec2.DescribeInstancesOutput
 	)
 
 	err = svc.WaitUntilInstanceRunning(&ec2.DescribeInstancesInput{
@@ -268,7 +306,7 @@ func awsWaitUntilInstanceRunning(svc *ec2.EC2, instanceID *string) *ec2.Instance
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	describeResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
+	instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
 			&ec2.Filter{
 				Name:   aws.String("instance-id"),
@@ -277,9 +315,9 @@ func awsWaitUntilInstanceRunning(svc *ec2.EC2, instanceID *string) *ec2.Instance
 		},
 	})
 	Expect(err).NotTo(HaveOccurred())
-	Expect(len((*describeResult.Reservations[0]).Instances)).To(Equal(1))
+	Expect(len((*instancesResult.Reservations[0]).Instances)).To(Equal(1))
 
-	return (*describeResult.Reservations[0]).Instances[0]
+	return (*instancesResult.Reservations[0]).Instances[0]
 }
 
 func AWSInstanceState(id string) string {
@@ -287,8 +325,8 @@ func AWSInstanceState(id string) string {
 	var (
 		err error
 
-		sess           *session.Session
-		describeResult *ec2.DescribeInstancesOutput
+		sess            *session.Session
+		instancesResult *ec2.DescribeInstancesOutput
 	)
 
 	sess, err = session.NewSession(&aws.Config{
@@ -302,10 +340,10 @@ func AWSInstanceState(id string) string {
 	Expect(err).NotTo(HaveOccurred())
 	svc := ec2.New(sess)
 
-	describeResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
+	instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 		InstanceIds: []*string{aws.String(id)},
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	return *(*describeResult.Reservations[0]).Instances[0].State.Name
+	return *(*instancesResult.Reservations[0]).Instances[0].State.Name
 }

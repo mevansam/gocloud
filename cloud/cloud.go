@@ -2,7 +2,11 @@ package cloud
 
 import (
 	"io"
+	"net"
 	"sync"
+	"time"
+
+	"github.com/mevansam/goutils/logger"
 )
 
 // instance states
@@ -50,6 +54,10 @@ type ComputeInstance interface {
 
 	// Stop the instance
 	Stop() error
+
+	// Tests connectivity on a
+	// given TCP port accepts
+	CanConnect(port int) bool
 }
 
 // interface for a cloud object store abstraction
@@ -84,6 +92,22 @@ type StorageInstance interface {
 	// the blob in chunks. The caller needs to handle
 	// errors from each of the asynchronous calls.
 	DownloadAsync(name string, data io.WriterAt) (*sync.WaitGroup, int64, []error, error)
+}
+
+// test tcp connection
+func canConnect(endpoint string) bool {
+
+	conn, err := net.DialTimeout("tcp", endpoint, time.Second)
+	if err != nil {
+		logger.TraceMessage(
+			"Connectivity test to '%s' failed: %s",
+			endpoint, err.Error(),
+		)
+		return false
+	}
+
+	defer conn.Close()
+	return true
 }
 
 // user agent to use for HTTP(s) API requests

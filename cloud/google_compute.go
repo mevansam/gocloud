@@ -347,3 +347,15 @@ func (c *googleComputeInstance) Stop() error {
 	return c.waitForState(
 		"TERMINATED", operation.Header.Get("Etag"))
 }
+
+func (c *googleComputeInstance) CanConnect(port int) bool {
+
+	publicIP := c.PublicIP()
+	if publicIP != "" {
+		return canConnect(
+			fmt.Sprintf("%s:%d", publicIP, port),
+		)
+	} else {
+		return false
+	}
+}

@@ -2,6 +2,7 @@ package cloud
 
 import (
 	"context"
+	"fmt"
 	"path"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
@@ -350,4 +351,15 @@ func (c *azureComputeInstance) Stop() error {
 	}
 	err = deallocFuture.WaitForCompletionRef(c.ctx, vmClient.BaseClient.Client)
 	return err
+}
+
+func (c *azureComputeInstance) CanConnect(port int) bool {
+
+	if c.publicIP != "" {
+		return canConnect(
+			fmt.Sprintf("%s:%d", c.PublicIP(), port),
+		)
+	} else {
+		return false
+	}
 }

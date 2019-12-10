@@ -297,3 +297,15 @@ func (c *awsComputeInstance) Stop() error {
 	}
 	return nil
 }
+
+func (c *awsComputeInstance) CanConnect(port int) bool {
+
+	publicIP := c.PublicIP()
+	if publicIP != "" {
+		return canConnect(
+			fmt.Sprintf("%s:%d", publicIP, port),
+		)
+	} else {
+		return false
+	}
+}
