@@ -8,4 +8,4 @@ The API abstracts the following public clouds:
 * Microsoft Azure
 * Google Cloud Platform
 
-The abstractions is implemented via the cloud interfaces in the `cloud` package. The cloud provider configurations closely follow the environment required by [Terraform](https://terraform.io). These abstractions are meant to complement the Terraform CLI and templates to provide cloud resource lifecycle management capabilities.
+The abstractions are implemented via the cloud interfaces in the `cloud` package. The cloud provider configurations closely follow the environment required by [Terraform](https://terraform.io). These abstractions are meant to complement the Terraform CLI and templates to provide cloud resource lifecycle management capabilities.
