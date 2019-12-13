@@ -15,6 +15,10 @@ type s3Backend struct {
 	name string
 }
 
+type azureBackend struct {
+	name string
+}
+
 type gcsBackend struct {
 	name string
 }
@@ -33,7 +37,12 @@ func NewCloudBackend(name string) (CloudBackend, error) {
 			name: name,
 		}, nil
 
-	case "aws":
+	case "azurerm":
+		return &azureBackend{
+			name: name,
+		}, nil
+
+	case "gcs":
 		return &gcsBackend{
 			name: name,
 		}, nil
@@ -82,6 +91,47 @@ func (b *s3Backend) UnmarshalJSON(in []byte) error {
 
 // interface: encoding/json/Marshaler
 func (b *s3Backend) MarshalJSON() ([]byte, error) {
+	return []byte{'{', '}'}, nil
+}
+
+/**
+ * AzureRM Backend
+ */
+
+func (b *azureBackend) Name() string {
+	return b.name
+}
+
+func (b *azureBackend) Description() string {
+	return ""
+}
+
+func (b *azureBackend) InputForm() (forms.InputForm, error) {
+	return nil, nil
+}
+
+func (b *azureBackend) GetValue(key string) (*string, error) {
+	return nil, nil
+}
+
+func (b *azureBackend) Copy() (config.Configurable, error) {
+	return nil, nil
+}
+
+func (b *azureBackend) IsValid() bool {
+	return false
+}
+
+func (b *azureBackend) Reset() {
+}
+
+// interface: encoding/json/Unmarshaler
+func (b *azureBackend) UnmarshalJSON(in []byte) error {
+	return nil
+}
+
+// interface: encoding/json/Marshaler
+func (b *azureBackend) MarshalJSON() ([]byte, error) {
 	return []byte{'{', '}'}, nil
 }
 
