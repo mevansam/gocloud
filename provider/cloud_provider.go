@@ -45,8 +45,8 @@ type newProvider func() (CloudProvider, error)
 
 var providerNames = map[string]newProvider{
 	"aws":    newAWSProvider,
-	"google": newGoogleProvider,
 	"azure":  newAzureProvider,
+	"google": newGoogleProvider,
 }
 
 // in: the iaas to create a cloud provider configuration template for
