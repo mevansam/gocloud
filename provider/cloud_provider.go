@@ -7,6 +7,7 @@ import (
 
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/goforms/config"
+	"github.com/mevansam/goforms/forms"
 
 	forms_config "github.com/mevansam/gocloud/forms"
 )
@@ -60,7 +61,7 @@ func NewCloudProvider(iaas string) (CloudProvider, error) {
 
 	if newProvider, exists = providerNames[iaas]; !exists {
 		return nil,
-			fmt.Errorf("provider for iaas '%s' is currently not handled by cloud builder", iaas)
+			fmt.Errorf("provider for iaas '%s' is currently not handled", iaas)
 	}
 	return newProvider()
 }
@@ -95,6 +96,37 @@ func (p *cloudProvider) Name() string {
 
 func (p *cloudProvider) Description() string {
 	return forms_config.CloudConfigForms.Group(p.name).Description()
+}
+
+func (p *cloudProvider) InputForm() (forms.InputForm, error) {
+
+	var (
+		err error
+	)
+
+	form := forms_config.CloudConfigForms.Group(p.name)
+	if err = form.BindFields(p.config); err != nil {
+		return nil, err
+	}
+	return form, nil
+}
+
+func (p *cloudProvider) GetValue(name string) (*string, error) {
+
+	var (
+		err error
+
+		form  forms.InputForm
+		field *forms.InputField
+	)
+
+	if form, err = p.InputForm(); err != nil {
+		return nil, err
+	}
+	if field, err = form.GetInputField(name); err != nil {
+		return nil, err
+	}
+	return field.Value(), nil
 }
 
 func (p *cloudProvider) Reset() {

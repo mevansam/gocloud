@@ -33,13 +33,13 @@ type googleProvider struct {
 
 type googleProviderConfig struct {
 	Authentication struct {
-		Credentials *string `json:"credentials,omitempty"`
-		AccessToken *string `json:"access_token,omitempty"`
+		Credentials *string `json:"credentials,omitempty" form_field:"credentials"`
+		AccessToken *string `json:"access_token,omitempty" form_field:"access_token"`
 	} `json:"authentication"`
 
-	Project *string `json:"project,omitempty"`
-	Region  *string `json:"region,omitempty"`
-	Zone    *string `json:"zone,omitempty"`
+	Project *string `json:"project,omitempty" form_field:"project"`
+	Region  *string `json:"region,omitempty" form_field:"region"`
+	Zone    *string `json:"zone,omitempty" form_field:"zone"`
 }
 
 var staticGoogleRegionMap = map[string]string{
@@ -112,6 +112,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 		/* description */ "Google Cloud authentication credentials",
 		/* groupId */ 1,
 	)
+
 	if _, err = form.NewInputGroupField(
 		/* name */ "credentials",
 		/* displayName */ "Credentials",
@@ -202,61 +203,6 @@ func (p *googleProvider) createGoogleInputForm() error {
 }
 
 // interface: config/Configurable functions of base cloud provider
-
-func (p *googleProvider) InputForm() (forms.InputForm, error) {
-
-	var (
-		err error
-
-		field          *forms.InputField
-		providerConfig *googleProviderConfig
-	)
-
-	// Bind Google configuration data instance to input form
-	form := forms_config.CloudConfigForms.Group(p.name)
-	providerConfig = p.config.(*googleProviderConfig)
-
-	field, _ = form.GetInputField("credentials")
-	if err = field.SetValueRef(&providerConfig.Authentication.Credentials); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("access_token")
-	if err = field.SetValueRef(&providerConfig.Authentication.AccessToken); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("project")
-	if err = field.SetValueRef(&providerConfig.Project); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("region")
-	if err = field.SetValueRef(&providerConfig.Region); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("zone")
-	if err = field.SetValueRef(&providerConfig.Zone); err != nil {
-		return nil, err
-	}
-
-	return form, nil
-}
-
-func (p *googleProvider) GetValue(name string) (*string, error) {
-
-	var (
-		err error
-
-		inputForm forms.InputForm
-		field     *forms.InputField
-	)
-
-	if inputForm, err = p.InputForm(); err != nil {
-		return nil, err
-	}
-	if field, err = inputForm.GetInputField(name); err != nil {
-		return nil, err
-	}
-	return field.Value(), nil
-}
 
 func (p *googleProvider) Copy() (config.Configurable, error) {
 

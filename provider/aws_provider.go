@@ -25,10 +25,10 @@ type awsProvider struct {
 }
 
 type awsProviderConfig struct {
-	AccessKey *string `json:"access_key,omitempty"`
-	SecretKey *string `json:"secret_key,omitempty"`
-	Region    *string `json:"region,omitempty"`
-	Token     *string `json:"token,omitempty"`
+	AccessKey *string `json:"access_key,omitempty" form_field:"access_key"`
+	SecretKey *string `json:"secret_key,omitempty" form_field:"secret_key"`
+	Region    *string `json:"region,omitempty" form_field:"region"`
+	Token     *string `json:"token,omitempty" form_field:"token"`
 }
 
 func newAWSProvider() (CloudProvider, error) {
@@ -134,58 +134,6 @@ func (p *awsProvider) createAWSInputForm() error {
 }
 
 // interface: config/Configurable functions of base cloud provider
-
-func (p *awsProvider) InputForm() (forms.InputForm, error) {
-
-	var (
-		err error
-
-		field          *forms.InputField
-		providerConfig *awsProviderConfig
-	)
-
-	// Bind AWS configuration data instance to input form
-	form := forms_config.CloudConfigForms.Group(p.name)
-	providerConfig = p.cloudProvider.
-		config.(*awsProviderConfig)
-
-	field, _ = form.GetInputField("access_key")
-	if err = field.SetValueRef(&providerConfig.AccessKey); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("secret_key")
-	if err = field.SetValueRef(&providerConfig.SecretKey); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("region")
-	if err = field.SetValueRef(&providerConfig.Region); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("token")
-	if err = field.SetValueRef(&providerConfig.Token); err != nil {
-		return nil, err
-	}
-
-	return form, nil
-}
-
-func (p *awsProvider) GetValue(name string) (*string, error) {
-
-	var (
-		err error
-
-		form  forms.InputForm
-		field *forms.InputField
-	)
-
-	if form, err = p.InputForm(); err != nil {
-		return nil, err
-	}
-	if field, err = form.GetInputField(name); err != nil {
-		return nil, err
-	}
-	return field.Value(), nil
-}
 
 func (p *awsProvider) Copy() (config.Configurable, error) {
 

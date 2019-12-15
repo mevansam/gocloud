@@ -35,13 +35,13 @@ type azureProvider struct {
 }
 
 type azureProviderConfig struct {
-	Environment          *string `json:"environment,omitempty"`
-	SubscriptionID       *string `json:"subscription_id,omitempty"`
-	ClientID             *string `json:"client_id,omitempty"`
-	ClientSecret         *string `json:"client_secret,omitempty"`
-	TenantID             *string `json:"tenant_id,omitempty"`
-	DefaultResourceGroup *string `json:"default_resource_group,omitempty"`
-	DefaultLocation      *string `json:"default_location,omitempty"`
+	Environment          *string `json:"environment,omitempty" form_field:"environment"`
+	SubscriptionID       *string `json:"subscription_id,omitempty" form_field:"subscription_id"`
+	ClientID             *string `json:"client_id,omitempty" form_field:"client_id"`
+	ClientSecret         *string `json:"client_secret,omitempty" form_field:"client_secret"`
+	TenantID             *string `json:"tenant_id,omitempty" form_field:"tenant_id"`
+	DefaultResourceGroup *string `json:"default_resource_group,omitempty" form_field:"default_resource_group"`
+	DefaultLocation      *string `json:"default_location,omitempty" form_field:"default_location"`
 }
 
 var environments = map[string]string{
@@ -222,70 +222,6 @@ func GetAzureStorageAccountName(p CloudProvider) string {
 }
 
 // interface: config/Configurable functions of base cloud provider
-
-func (p *azureProvider) InputForm() (forms.InputForm, error) {
-
-	var (
-		err error
-
-		field          *forms.InputField
-		providerConfig *azureProviderConfig
-	)
-
-	// Bind Azure configuration data instance to input form
-	form := forms_config.CloudConfigForms.Group(p.name)
-	providerConfig = p.cloudProvider.
-		config.(*azureProviderConfig)
-
-	field, _ = form.GetInputField("environment")
-	if err = field.SetValueRef(&providerConfig.Environment); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("subscription_id")
-	if err = field.SetValueRef(&providerConfig.SubscriptionID); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("client_id")
-	if err = field.SetValueRef(&providerConfig.ClientID); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("client_secret")
-	if err = field.SetValueRef(&providerConfig.ClientSecret); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("tenant_id")
-	if err = field.SetValueRef(&providerConfig.TenantID); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("default_resource_group")
-	if err = field.SetValueRef(&providerConfig.DefaultResourceGroup); err != nil {
-		return nil, err
-	}
-	field, _ = form.GetInputField("default_location")
-	if err = field.SetValueRef(&providerConfig.DefaultLocation); err != nil {
-		return nil, err
-	}
-
-	return form, nil
-}
-
-func (p *azureProvider) GetValue(name string) (*string, error) {
-
-	var (
-		err error
-
-		inputForm forms.InputForm
-		field     *forms.InputField
-	)
-
-	if inputForm, err = p.InputForm(); err != nil {
-		return nil, err
-	}
-	if field, err = inputForm.GetInputField(name); err != nil {
-		return nil, err
-	}
-	return field.Value(), nil
-}
 
 func (p *azureProvider) Copy() (config.Configurable, error) {
 
