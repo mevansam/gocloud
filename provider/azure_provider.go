@@ -221,7 +221,7 @@ func GetAzureStorageAccountName(p CloudProvider) string {
 	return storageAccountName
 }
 
-// interface: config/Configurable functions for base cloud provider
+// interface: config/Configurable functions of base cloud provider
 
 func (p *azureProvider) InputForm() (forms.InputForm, error) {
 

@@ -133,7 +133,7 @@ func (p *awsProvider) createAWSInputForm() error {
 	return nil
 }
 
-// interface: config/Configurable functions for base cloud provider
+// interface: config/Configurable functions of base cloud provider
 
 func (p *awsProvider) InputForm() (forms.InputForm, error) {
 
