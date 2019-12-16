@@ -1,218 +1,123 @@
 package backend
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+
+	forms_config "github.com/mevansam/gocloud/forms"
 )
 
 type CloudBackend interface {
 	config.Configurable
+
+	// the cloud provider that supports this backend
+	GetProviderType() string
+
+	// initializes the storage for this backend
+	Initialize(provider provider.CloudProvider) error
 }
 
-type s3Backend struct {
-	name string
+// base cloud backend implementation
+type cloudBackend struct {
+	name,
+	providerType string
+
+	config interface{}
 }
 
-type azureBackend struct {
-	name string
-}
+type newBackend func() (CloudBackend, error)
 
-type gcsBackend struct {
-	name string
-}
-
-type localBackend struct {
+var backendNames = map[string]newBackend{
+	"s3":      newS3Backend,
+	"azurerm": newAzureRMBackend,
+	"gcs":     newGCSBackend,
 }
 
 func NewCloudBackend(name string) (CloudBackend, error) {
 
-	switch name {
-	case "":
-		return &localBackend{}, nil
+	var (
+		newBackend newBackend
+		exists     bool
+	)
 
-	case "s3":
-		return &s3Backend{
-			name: name,
-		}, nil
-
-	case "azurerm":
-		return &azureBackend{
-			name: name,
-		}, nil
-
-	case "gcs":
-		return &gcsBackend{
-			name: name,
-		}, nil
-
-	default:
+	if newBackend, exists = backendNames[name]; !exists {
 		return nil,
-			fmt.Errorf("backend '%s' is currently not handled by cloud builder", name)
+			fmt.Errorf("backend named '%s' is currently not handled", name)
 	}
+	return newBackend()
 }
 
-/**
- * S3 Backend
- */
+func IsValidCloudBackend(name string) bool {
+	_, ok := backendNames[name]
+	return ok
+}
 
-func (b *s3Backend) Name() string {
+// interface: config/Configurable functions for base cloud provider
+
+func (b *cloudBackend) Name() string {
 	return b.name
 }
 
-func (b *s3Backend) Description() string {
-	return ""
+func (b *cloudBackend) Description() string {
+	return forms_config.CloudConfigForms.Group(b.name).Description()
 }
 
-func (b *s3Backend) InputForm() (forms.InputForm, error) {
-	return nil, nil
+func (b *cloudBackend) InputForm() (forms.InputForm, error) {
+
+	var (
+		err error
+	)
+
+	form := forms_config.CloudConfigForms.Group(b.name)
+	if err = form.BindFields(b.config); err != nil {
+		return nil, err
+	}
+	return form, nil
 }
 
-func (b *s3Backend) GetValue(key string) (*string, error) {
-	return nil, nil
+func (b *cloudBackend) GetValue(name string) (*string, error) {
+
+	var (
+		err error
+
+		form  forms.InputForm
+		field *forms.InputField
+	)
+
+	if form, err = b.InputForm(); err != nil {
+		return nil, err
+	}
+	if field, err = form.GetInputField(name); err != nil {
+		return nil, err
+	}
+	return field.Value(), nil
 }
 
-func (b *s3Backend) Copy() (config.Configurable, error) {
-	return nil, nil
+func (b *cloudBackend) Reset() {
 }
 
-func (b *s3Backend) IsValid() bool {
-	return false
+// interface: backend/CloudBackend functions
+
+func (b *cloudBackend) GetProviderType() string {
+	return b.providerType
 }
 
-func (b *s3Backend) Reset() {
-}
-
-// interface: encoding/json/Unmarshaler
-func (b *s3Backend) UnmarshalJSON(in []byte) error {
-	return nil
-}
-
-// interface: encoding/json/Marshaler
-func (b *s3Backend) MarshalJSON() ([]byte, error) {
-	return []byte{'{', '}'}, nil
-}
-
-/**
- * AzureRM Backend
- */
-
-func (b *azureBackend) Name() string {
-	return b.name
-}
-
-func (b *azureBackend) Description() string {
-	return ""
-}
-
-func (b *azureBackend) InputForm() (forms.InputForm, error) {
-	return nil, nil
-}
-
-func (b *azureBackend) GetValue(key string) (*string, error) {
-	return nil, nil
-}
-
-func (b *azureBackend) Copy() (config.Configurable, error) {
-	return nil, nil
-}
-
-func (b *azureBackend) IsValid() bool {
-	return false
-}
-
-func (b *azureBackend) Reset() {
+func (b *cloudBackend) getConfig() interface{} {
+	return b.config
 }
 
 // interface: encoding/json/Unmarshaler
-func (b *azureBackend) UnmarshalJSON(in []byte) error {
-	return nil
+
+func (b *cloudBackend) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &b.config)
 }
 
 // interface: encoding/json/Marshaler
-func (b *azureBackend) MarshalJSON() ([]byte, error) {
-	return []byte{'{', '}'}, nil
-}
 
-/**
- * GCS Backend
- */
-
-func (b *gcsBackend) Name() string {
-	return b.name
-}
-
-func (b *gcsBackend) Description() string {
-	return ""
-}
-
-func (b *gcsBackend) InputForm() (forms.InputForm, error) {
-	return nil, nil
-}
-
-func (b *gcsBackend) GetValue(key string) (*string, error) {
-	return nil, nil
-}
-
-func (b *gcsBackend) Copy() (config.Configurable, error) {
-	return nil, nil
-}
-
-func (b *gcsBackend) IsValid() bool {
-	return false
-}
-
-func (b *gcsBackend) Reset() {
-}
-
-// interface: encoding/json/Unmarshaler
-func (b *gcsBackend) UnmarshalJSON(in []byte) error {
-	return nil
-}
-
-// interface: encoding/json/Marshaler
-func (b *gcsBackend) MarshalJSON() ([]byte, error) {
-	return []byte{'{', '}'}, nil
-}
-
-/**
- * Local Backend
- */
-
-func (b *localBackend) Name() string {
-	return "local"
-}
-
-func (b *localBackend) Description() string {
-	return "Local backend persists state in a local folder"
-}
-
-func (b *localBackend) InputForm() (forms.InputForm, error) {
-	return nil, nil
-}
-
-func (b *localBackend) GetValue(key string) (*string, error) {
-	return nil, nil
-}
-
-func (b *localBackend) Copy() (config.Configurable, error) {
-	return nil, nil
-}
-
-func (b *localBackend) IsValid() bool {
-	return false
-}
-
-func (b *localBackend) Reset() {
-}
-
-// interface: encoding/json/Unmarshaler
-func (b *localBackend) UnmarshalJSON(in []byte) error {
-	return nil
-}
-
-// interface: encoding/json/Marshaler
-func (b *localBackend) MarshalJSON() ([]byte, error) {
-	return []byte{'{', '}'}, nil
+func (b *cloudBackend) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&b.config)
 }
