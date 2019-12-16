@@ -98,7 +98,7 @@ var _ = Describe("AWS Provider Tests", func() {
 
 		It("loads configuration values", func() {
 
-			parseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
+			test_data.ParseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
 			test_data.ValidateAWSConfigDocument(awsProvider)
 
 			// Run some negative tests
@@ -112,9 +112,9 @@ var _ = Describe("AWS Provider Tests", func() {
 				buffer strings.Builder
 			)
 
-			parseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
+			test_data.ParseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
 			_, err = awsProvider.InputForm() // ensure defaults are bound
-			writeConfigDocument(awsProvider, "awsProvider", &buffer)
+			test_data.WriteConfigDocument(awsProvider, "providers", "awsProvider", &buffer)
 
 			actual := make(map[string]interface{})
 			err = json.Unmarshal([]byte(buffer.String()), &actual)
@@ -138,7 +138,7 @@ var _ = Describe("AWS Provider Tests", func() {
 			v1, v2 *string
 		)
 
-		parseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
+		test_data.ParseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
 		copy, err := awsProvider.Copy()
 		Expect(err).NotTo(HaveOccurred())
 
@@ -195,7 +195,7 @@ const awsConfigDocument = `
 {
 	"cloud": {
 		"providers": {
-			"awsProvider": ` + test_data.AWSProviderConfig1 + `
+			"awsProvider": ` + test_data.AWSProviderConfig + `
 		}
 	}
 }
@@ -205,7 +205,7 @@ const expectedAWSConfigDocument = `
 {
 	"cloud": {
 		"providers": {
-			"awsProvider": ` + test_data.ExpectedAWSProviderConfig1 + `
+			"awsProvider": ` + test_data.ExpectedAWSProviderConfig + `
 		}
 	}
 }			

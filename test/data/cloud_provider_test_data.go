@@ -1,13 +1,14 @@
 package data
 
 import (
-	. "github.com/onsi/gomega"
 	"github.com/mevansam/gocloud/provider"
+
+	. "github.com/onsi/gomega"
 )
 
 // aws provider test data
 
-const AWSProviderConfig1 = `
+const AWSProviderConfig = `
 {
 	"access_key": "83BFAD5B-FEAC-4019-A645-3858847CB3ED",
 	"secret_key": "3BA9D494-5D49-4F1A-84CA-70D10A08ACDE",
@@ -16,28 +17,12 @@ const AWSProviderConfig1 = `
 }
 `
 
-const ExpectedAWSProviderConfig1 = `
+const ExpectedAWSProviderConfig = `
 {
 	"access_key": "83BFAD5B-FEAC-4019-A645-3858847CB3ED",
 	"secret_key": "3BA9D494-5D49-4F1A-84CA-70D10A08ACDE",
 	"region": "us-east-1",
 	"token": "E4B22688-A369-4FB1-B375-732ACED7156F"
-}
-`
-
-const AWSProviderConfig2 = `
-{
-	"access_key": "83BFAD5B-FEAC-4019-A645-3858847CB3ED",
-	"secret_key": "3BA9D494-5D49-4F1A-84CA-70D10A08ACDE",
-	"region": "eu-central-1"
-}
-`
-
-const ExpectedAWSProviderConfig2 = `
-{
-	"access_key": "83BFAD5B-FEAC-4019-A645-3858847CB3ED",
-	"secret_key": "3BA9D494-5D49-4F1A-84CA-70D10A08ACDE",
-	"region": "eu-central-1"
 }
 `
 

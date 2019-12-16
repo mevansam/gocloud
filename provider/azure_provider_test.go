@@ -128,7 +128,7 @@ var _ = Describe("Azure Provider Tests", func() {
 
 		It("loads a configuration values", func() {
 
-			parseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
+			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
 			test_data.ValidateAzureConfigDocument(azureProvider)
 
 			// Run some negative tests
@@ -142,8 +142,8 @@ var _ = Describe("Azure Provider Tests", func() {
 				buffer strings.Builder
 			)
 
-			parseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
-			writeConfigDocument(azureProvider, "azureProvider", &buffer)
+			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
+			test_data.WriteConfigDocument(azureProvider, "providers", "azureProvider", &buffer)
 
 			actual := make(map[string]interface{})
 			err = json.Unmarshal([]byte(buffer.String()), &actual)
@@ -166,7 +166,7 @@ var _ = Describe("Azure Provider Tests", func() {
 				v1, v2 *string
 			)
 
-			parseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
+			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
 			copy, err := azureProvider.Copy()
 			Expect(err).NotTo(HaveOccurred())
 

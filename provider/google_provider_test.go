@@ -105,7 +105,7 @@ var _ = Describe("Google Provider Tests", func() {
 
 		It("loads a configuration values", func() {
 
-			parseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
+			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
 			test_data.ValidateGoogleConfigDocument(googleProvider)
 
 			// Run some negative tests
@@ -119,8 +119,8 @@ var _ = Describe("Google Provider Tests", func() {
 				buffer strings.Builder
 			)
 
-			parseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
-			writeConfigDocument(googleProvider, "googleProvider", &buffer)
+			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
+			test_data.WriteConfigDocument(googleProvider, "providers", "googleProvider", &buffer)
 
 			actual := make(map[string]interface{})
 			err = json.Unmarshal([]byte(buffer.String()), &actual)
@@ -143,7 +143,7 @@ var _ = Describe("Google Provider Tests", func() {
 				v1, v2 *string
 			)
 
-			parseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
+			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
 			copy, err := googleProvider.Copy()
 			Expect(err).NotTo(HaveOccurred())
 
