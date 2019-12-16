@@ -1,7 +1,6 @@
 package provider_test
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/mevansam/gocloud/provider"
@@ -90,7 +89,7 @@ var _ = Describe("AWS Provider Tests", func() {
 		})
 	})
 
-	Context("aws cloud config inputs", func() {
+	Context("aws provider config inputs", func() {
 
 		It("outputs a detailed input data form reference for aws provider config inputs", func() {
 			testConfigReferenceOutput(awsProvider, awsInputDataReferenceOutput)
@@ -107,71 +106,14 @@ var _ = Describe("AWS Provider Tests", func() {
 		})
 
 		It("saves configuration values", func() {
-
-			var (
-				buffer strings.Builder
-			)
-
 			test_data.ParseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
-			_, err = awsProvider.InputForm() // ensure defaults are bound
-			test_data.WriteConfigDocument(awsProvider, "providers", "awsProvider", &buffer)
-
-			actual := make(map[string]interface{})
-			err = json.Unmarshal([]byte(buffer.String()), &actual)
-			Expect(err).NotTo(HaveOccurred())
-			logger.TraceMessage("Parsed saved AWS provider config: %# v", actual)
-
-			expected := make(map[string]interface{})
-			err = json.Unmarshal([]byte(expectedAWSConfigDocument), &expected)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(actual).To(Equal(expected))
+			test_data.MarshalConfigDocumentAndValidate(awsProvider, "providers", "awsProvider", awsConfigDocument)
 		})
 	})
 
 	It("creates a copy of itself", func() {
-
-		var (
-			inputForm forms.InputForm
-
-			// value  string
-			v1, v2 *string
-		)
-
 		test_data.ParseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
-		copy, err := awsProvider.Copy()
-		Expect(err).NotTo(HaveOccurred())
-
-		inputForm, err = awsProvider.InputForm()
-		Expect(err).NotTo(HaveOccurred())
-
-		for _, f := range inputForm.InputFields() {
-
-			v1, err = awsProvider.GetValue(f.Name())
-			Expect(err).NotTo(HaveOccurred())
-
-			v2, err = copy.GetValue(f.Name())
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(*v2).To(Equal(*v1))
-		}
-
-		// Retrieve form again to ensure form is bound to config
-		inputForm, err = awsProvider.InputForm()
-		Expect(err).NotTo(HaveOccurred())
-
-		err = inputForm.SetFieldValue("access_key", "random value for access_key")
-		Expect(err).NotTo(HaveOccurred())
-
-		// Change value in source config
-		v1, err = awsProvider.GetValue("access_key")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(*v1).To(Equal("random value for access_key"))
-
-		// Validate change does not affect copy
-		v2, err = copy.GetValue("access_key")
-		Expect(err).NotTo(HaveOccurred())
-		Expect(*v2).To(Equal("83BFAD5B-FEAC-4019-A645-3858847CB3ED"))
+		test_data.CopyConfigAndValidate(awsProvider, "access_key", "83BFAD5B-FEAC-4019-A645-3858847CB3ED", "random value for access_key")
 	})
 })
 
@@ -199,14 +141,4 @@ const awsConfigDocument = `
 		}
 	}
 }
-`
-
-const expectedAWSConfigDocument = `
-{
-	"cloud": {
-		"providers": {
-			"awsProvider": ` + test_data.ExpectedAWSProviderConfig + `
-		}
-	}
-}			
 `

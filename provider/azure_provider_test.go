@@ -2,14 +2,12 @@ package provider_test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
-	"github.com/mevansam/goutils/logger"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -120,7 +118,7 @@ var _ = Describe("Azure Provider Tests", func() {
 		})
 	})
 
-	Context("azure cloud config", func() {
+	Context("azure provider config", func() {
 
 		It("outputs a detailed input data form reference for azure provider config inputs", func() {
 			testConfigReferenceOutput(azureProvider, azureInputDataReferenceOutput)
@@ -137,69 +135,13 @@ var _ = Describe("Azure Provider Tests", func() {
 		})
 
 		It("saves a configuration values", func() {
-
-			var (
-				buffer strings.Builder
-			)
-
 			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
-			test_data.WriteConfigDocument(azureProvider, "providers", "azureProvider", &buffer)
-
-			actual := make(map[string]interface{})
-			err = json.Unmarshal([]byte(buffer.String()), &actual)
-			Expect(err).NotTo(HaveOccurred())
-			logger.TraceMessage("Parsed saved Azure provider config: %# v", actual)
-
-			expected := make(map[string]interface{})
-			err = json.Unmarshal([]byte(azureConfigDocument), &expected)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(actual).To(Equal(expected))
+			test_data.MarshalConfigDocumentAndValidate(azureProvider, "providers", "azureProvider", azureConfigDocument)
 		})
 
 		It("creates a copy of itself", func() {
-
-			var (
-				inputForm forms.InputForm
-
-				// value  string
-				v1, v2 *string
-			)
-
 			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
-			copy, err := azureProvider.Copy()
-			Expect(err).NotTo(HaveOccurred())
-
-			inputForm, err = azureProvider.InputForm()
-			Expect(err).NotTo(HaveOccurred())
-
-			for _, f := range inputForm.InputFields() {
-
-				v1, err = azureProvider.GetValue(f.Name())
-				Expect(err).NotTo(HaveOccurred())
-
-				v2, err = copy.GetValue(f.Name())
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(*v2).To(Equal(*v1))
-			}
-
-			// Retrieve form again to ensure form is bound to config
-			inputForm, err = azureProvider.InputForm()
-			Expect(err).NotTo(HaveOccurred())
-
-			err = inputForm.SetFieldValue("client_id", "random value for client_id")
-			Expect(err).NotTo(HaveOccurred())
-
-			// Change value in source config
-			v1, err = azureProvider.GetValue("client_id")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(*v1).To(Equal("random value for client_id"))
-
-			// Validate change does not affect copy
-			v2, err = copy.GetValue("client_id")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(*v2).To(Equal("BC3974F4-02C2-4762-8561-8CD466450914"))
+			test_data.CopyConfigAndValidate(azureProvider, "client_id", "BC3974F4-02C2-4762-8561-8CD466450914", "random value for client_id")
 		})
 	})
 })
@@ -241,5 +183,3 @@ const azureConfigDocument = `
 	}
 }
 `
-
-// Azure SDK Helper functions

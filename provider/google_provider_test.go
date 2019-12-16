@@ -1,12 +1,10 @@
 package provider_test
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
-	"github.com/mevansam/goutils/logger"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -97,7 +95,7 @@ var _ = Describe("Google Provider Tests", func() {
 		})
 	})
 
-	Context("google cloud config inputs", func() {
+	Context("google provider config inputs", func() {
 
 		It("outputs a detailed input data form reference for google provider config inputs", func() {
 			testConfigReferenceOutput(googleProvider, googleInputDataReferenceOutput)
@@ -114,69 +112,13 @@ var _ = Describe("Google Provider Tests", func() {
 		})
 
 		It("saves a configuration values", func() {
-
-			var (
-				buffer strings.Builder
-			)
-
 			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
-			test_data.WriteConfigDocument(googleProvider, "providers", "googleProvider", &buffer)
-
-			actual := make(map[string]interface{})
-			err = json.Unmarshal([]byte(buffer.String()), &actual)
-			Expect(err).NotTo(HaveOccurred())
-			logger.TraceMessage("Parsed saved Google provider config: %# v", actual)
-
-			expected := make(map[string]interface{})
-			err = json.Unmarshal([]byte(googleConfigDocument), &expected)
-			Expect(err).NotTo(HaveOccurred())
-
-			Expect(actual).To(Equal(expected))
+			test_data.MarshalConfigDocumentAndValidate(googleProvider, "providers", "googleProvider", googleConfigDocument)
 		})
 
 		It("creates a copy of itself", func() {
-
-			var (
-				inputForm forms.InputForm
-
-				// value  string
-				v1, v2 *string
-			)
-
 			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
-			copy, err := googleProvider.Copy()
-			Expect(err).NotTo(HaveOccurred())
-
-			inputForm, err = googleProvider.InputForm()
-			Expect(err).NotTo(HaveOccurred())
-
-			for _, f := range inputForm.InputFields() {
-
-				v1, err = googleProvider.GetValue(f.Name())
-				Expect(err).NotTo(HaveOccurred())
-
-				v2, err = copy.GetValue(f.Name())
-				Expect(err).NotTo(HaveOccurred())
-
-				Expect(*v2).To(Equal(*v1))
-			}
-
-			// Retrieve form again to ensure form is bound to config
-			inputForm, err = googleProvider.InputForm()
-			Expect(err).NotTo(HaveOccurred())
-
-			err = inputForm.SetFieldValue("access_token", "random value for access_token")
-			Expect(err).NotTo(HaveOccurred())
-
-			// Change value in source config
-			v1, err = googleProvider.GetValue("access_token")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(*v1).To(Equal("random value for access_token"))
-
-			// Validate change does not affect copy
-			v2, err = copy.GetValue("access_token")
-			Expect(err).NotTo(HaveOccurred())
-			Expect(*v2).To(Equal("0640E5A6-8346-4F99-9ED7-7E384CCD0EAA"))
+			test_data.CopyConfigAndValidate(googleProvider, "access_token", "0640E5A6-8346-4F99-9ED7-7E384CCD0EAA", "random value for access_token")
 		})
 	})
 })
