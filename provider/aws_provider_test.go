@@ -1,16 +1,12 @@
 package provider_test
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
-	"os"
 	"strings"
 
+	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
-	"github.com/mevansam/goforms/ux"
-	"github.com/mevansam/gocloud/provider"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -97,54 +93,7 @@ var _ = Describe("AWS Provider Tests", func() {
 	Context("aws cloud config inputs", func() {
 
 		It("outputs a detailed input data form reference for aws provider config inputs", func() {
-
-			var (
-				origStdout, stdOutReader *os.File
-			)
-
-			// pipe output to be written to by form output
-			origStdout = os.Stdout
-			stdOutReader, os.Stdout, err = os.Pipe()
-			Expect(err).ToNot(HaveOccurred())
-
-			defer func() {
-				stdOutReader.Close()
-				os.Stdout = origStdout
-			}()
-
-			// channel to signal when getting form input is done
-			out := make(chan string)
-
-			go func() {
-
-				var (
-					output    bytes.Buffer
-					inputForm forms.InputForm
-				)
-
-				inputForm, err = awsProvider.InputForm()
-				Expect(err).NotTo(HaveOccurred())
-
-				tf, err := ux.NewTextForm(
-					"Cloud Provider Configuration",
-					"CONFIGURATION DATA INPUT REFERENCE",
-					inputForm)
-				Expect(err).NotTo(HaveOccurred())
-				tf.ShowInputReference(false, 0, 2, 80)
-
-				// close piped output
-				os.Stdout.Close()
-				io.Copy(&output, stdOutReader)
-
-				// signal end
-				out <- output.String()
-			}()
-
-			// wait until signal is received
-
-			output := <-out
-			logger.DebugMessage("\n%s\n", output)
-			Expect(output).To(Equal(awsInputDataReferenceOutput))
+			testConfigReferenceOutput(awsProvider, awsInputDataReferenceOutput)
 		})
 
 		It("loads configuration values", func() {
