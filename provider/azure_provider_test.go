@@ -136,7 +136,7 @@ var _ = Describe("Azure Provider Tests", func() {
 
 		It("saves a configuration values", func() {
 			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
-			test_data.MarshalConfigDocumentAndValidate(azureProvider, "providers", "azureProvider", azureConfigDocument)
+			test_data.MarshalConfigDocumentAndValidate(azureProvider, "azureProvider", azureConfigDocument)
 		})
 
 		It("creates a copy of itself", func() {
@@ -177,9 +177,7 @@ CONFIGURATION DATA INPUT REFERENCE
 const azureConfigDocument = `
 {
 	"cloud": {
-		"providers": {
-			"azureProvider": ` + test_data.AzureProviderConfig + `
-		}
+		"azureProvider": ` + test_data.AzureProviderConfig + `
 	}
 }
 `

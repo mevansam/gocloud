@@ -37,7 +37,7 @@ var _ = Describe("AWS Provider Tests", func() {
 			var (
 				inputForm        forms.InputForm
 				regionInputField *forms.InputField
-				acceptedValues   *[]string
+				acceptedValues   []string
 			)
 
 			expectedList := [][]string{
@@ -74,9 +74,9 @@ var _ = Describe("AWS Provider Tests", func() {
 			regionInputField, err = inputForm.GetInputField("region")
 			Expect(err).NotTo(HaveOccurred())
 			acceptedValues = regionInputField.AcceptedValues()
-			Expect(len(*acceptedValues)).To(Equal(len(expectedList)))
+			Expect(len(acceptedValues)).To(Equal(len(expectedList)))
 
-			for _, r := range *acceptedValues {
+			for _, r := range acceptedValues {
 				found := false
 				for _, rr := range expectedList {
 					if r == rr[0] {
@@ -107,7 +107,7 @@ var _ = Describe("AWS Provider Tests", func() {
 
 		It("saves configuration values", func() {
 			test_data.ParseConfigDocument(awsProvider, awsConfigDocument, "awsProvider")
-			test_data.MarshalConfigDocumentAndValidate(awsProvider, "providers", "awsProvider", awsConfigDocument)
+			test_data.MarshalConfigDocumentAndValidate(awsProvider, "awsProvider", awsConfigDocument)
 		})
 	})
 
@@ -136,9 +136,7 @@ CONFIGURATION DATA INPUT REFERENCE
 const awsConfigDocument = `
 {
 	"cloud": {
-		"providers": {
-			"awsProvider": ` + test_data.AWSProviderConfig + `
-		}
+		"awsProvider": ` + test_data.AWSProviderConfig + `
 	}
 }
 `

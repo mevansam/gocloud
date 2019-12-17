@@ -46,7 +46,7 @@ var _ = Describe("Google Provider Tests", func() {
 			var (
 				inputForm        forms.InputForm
 				regionInputField *forms.InputField
-				acceptedValues   *[]string
+				acceptedValues   []string
 			)
 
 			regionList := googleProvider.Regions()
@@ -59,9 +59,9 @@ var _ = Describe("Google Provider Tests", func() {
 			regionInputField, err = inputForm.GetInputField("region")
 			Expect(err).NotTo(HaveOccurred())
 			acceptedValues = regionInputField.AcceptedValues()
-			Expect(len(*acceptedValues)).To(Equal(len(regionList)))
+			Expect(len(acceptedValues)).To(Equal(len(regionList)))
 
-			for _, r := range *acceptedValues {
+			for _, r := range acceptedValues {
 				found := false
 				for _, rr := range googleRegions {
 					if r == rr {
@@ -113,7 +113,7 @@ var _ = Describe("Google Provider Tests", func() {
 
 		It("saves a configuration values", func() {
 			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
-			test_data.MarshalConfigDocumentAndValidate(googleProvider, "providers", "googleProvider", googleConfigDocument)
+			test_data.MarshalConfigDocumentAndValidate(googleProvider, "googleProvider", googleConfigDocument)
 		})
 
 		It("creates a copy of itself", func() {
@@ -159,9 +159,7 @@ CONFIGURATION DATA INPUT REFERENCE
 const googleConfigDocument = `
 {
 	"cloud": {
-		"providers": {
-			"googleProvider": ` + test_data.GoogleProviderConfig + `
-		}
+		"googleProvider": ` + test_data.GoogleProviderConfig + `
 	}
 }
 `

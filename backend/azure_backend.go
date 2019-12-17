@@ -56,48 +56,36 @@ func (b *azurermBackend) createAzureRMInputForm() error {
 
 	form = forms_config.CloudConfigForms.NewGroup(b.name, "Azure Resource Manager Storage Backend")
 
-	if _, err = form.NewInputField(
-		/* name */ "resource_group_name",
-		/* displayName */ "Resource Group Name",
-		/* description */ "The Azure resource group name where storage resources will be created.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "resource_group_name",
+		DisplayName: "Resource Group Name",
+		Description: "The Azure resource group name where storage resources will be created.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(
-		/* name */ "storage_account_name",
-		/* displayName */ "Storage Account Name",
-		/* description */ "The name of the storage account to use for the state container.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "storage_account_name",
+		DisplayName: "Storage Account Name",
+		Description: "The name of the storage account to use for the state container.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(
-		/* name */ "container_name",
-		/* displayName */ "Container Name",
-		/* description */ "The name of the storage container where state will be saved.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "container_name",
+		DisplayName: "Container Name",
+		Description: "The name of the storage container where state will be saved.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(
-		/* name */ "key",
-		/* displayName */ "Key",
-		/* description */ "The key with which to identify the state blob in the container.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "key",
+		DisplayName: "Key",
+		Description: "The key with which to identify the state blob in the container.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/utils"
 
 	forms_config "github.com/mevansam/gocloud/forms"
 )
@@ -58,77 +59,67 @@ func (p *awsProvider) createAWSInputForm() error {
 	}
 
 	var (
-		err   error
-		form  *forms.InputGroup
-		field forms.Input
+		err  error
+		form *forms.InputGroup
 	)
 
 	regions := p.Regions()
-	rr := make([]string, len(regions))
+	regionList := make([]string, len(regions))
 	for i, r := range regions {
-		rr[i] = r.Name
+		regionList[i] = r.Name
 	}
 
 	form = forms_config.CloudConfigForms.NewGroup(p.name, "Amazon Web Services Cloud Platform")
 
-	if _, err = form.NewInputGroupField(
-		/* name */ "access_key",
-		/* displayName */ "Access Key",
-		/* description */ "The AWS user account's access key id.",
-		/* groupId */ 0,
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "access_key",
+		DisplayName: "Access Key",
+		Description: "The AWS user account's access key id.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"AWS_ACCESS_KEY_ID",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-	if field, err = form.NewInputField(
-		/* name */ "secret_key",
-		/* displayName */ "Secret Key",
-		/* description */ "The AWS user account's secret key.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "secret_key",
+		DisplayName: "Secret Key",
+		Description: "The AWS user account's secret key.",
+		InputType:   forms.String,
+		Sensitive:   true,
+		EnvVars: []string{
 			"AWS_SECRET_ACCESS_KEY",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetSensitive(true)
-
-	if field, err = form.NewInputField(
-		/* name */ "region",
-		/* displayName */ "Region",
-		/* description */ "The AWS region to create resources in.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:         "region",
+		DisplayName:  "Region",
+		Description:  "The AWS region to create resources in.",
+		InputType:    forms.String,
+		DefaultValue: utils.PtrToStr("us-east-1"),
+		EnvVars: []string{
 			"AWS_DEFAULT_REGION",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+		AcceptedValues:             regionList,
+		AcceptedValuesErrorMessage: "Not a valid AWS region.",
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetAcceptedValues(&rr, "Not a valid AWS region.")
-
-	if field, err = form.NewInputField(
-		/* name */ "token",
-		/* displayName */ "Token",
-		/* description */ "AWS multi-factor authentication token.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "token",
+		DisplayName: "Token",
+		Description: "AWS multi-factor authentication token.",
+		InputType:   forms.String,
+		Sensitive:   true,
+		EnvVars: []string{
 			"AWS_SESSION_TOKEN",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetSensitive(true)
 
 	return nil
 }

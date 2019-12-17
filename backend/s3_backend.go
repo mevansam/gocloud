@@ -54,26 +54,20 @@ func (b *s3Backend) createS3InputForm() error {
 
 	form = forms_config.CloudConfigForms.NewGroup(b.name, "Amazon Web Services S3 Storage Backend")
 
-	if _, err = form.NewInputField(
-		/* name */ "bucket",
-		/* displayName */ "Bucket",
-		/* description */ "The S3 bucket to store state in.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "bucket",
+		DisplayName: "Bucket",
+		Description: "The S3 bucket to store state in.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(
-		/* name */ "key",
-		/* displayName */ "Key",
-		/* description */ "The key with which to identify the state object in the bucket.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "key",
+		DisplayName: "Key",
+		Description: "The key with which to identify the state object in the bucket.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
 	return nil

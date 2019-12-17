@@ -46,7 +46,7 @@ var _ = Describe("Azure Backend Tests", func() {
 
 		It("saves configuration values", func() {
 			test_data.ParseConfigDocument(azurermBackend, azurermConfigDocument, "azurermBackend")
-			test_data.MarshalConfigDocumentAndValidate(azurermBackend, "backend", "azurermBackend", azurermConfigDocument)
+			test_data.MarshalConfigDocumentAndValidate(azurermBackend, "azurermBackend", azurermConfigDocument)
 		})
 	})
 
@@ -75,9 +75,7 @@ CONFIGURATION DATA INPUT REFERENCE
 const azurermConfigDocument = `
 {
 	"cloud": {
-		"backend": {
-			"azurermBackend": ` + test_data.AzureRMBackendConfig + `
-		}
+		"azurermBackend": ` + test_data.AzureRMBackendConfig + `
 	}
 }
 `

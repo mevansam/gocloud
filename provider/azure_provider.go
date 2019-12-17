@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/mevansam/goutils/utils"
+
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	"github.com/Azure/go-autorest/autorest"
@@ -81,126 +83,109 @@ func (p *azureProvider) createAzureInputForm() error {
 	}
 
 	var (
-		err   error
-		form  *forms.InputGroup
-		field forms.Input
+		err  error
+		form *forms.InputGroup
 	)
 
 	regions := p.Regions()
-	rr := make([]string, len(regions))
+	regionList := make([]string, len(regions))
 	for i, r := range regions {
-		rr[i] = r.Name
+		regionList[i] = r.Name
 	}
 
-	form = forms_config.CloudConfigForms.NewGroup(p.name, "Microsoft Azure Cloud Computing Platform")
-
-	if field, err = form.NewInputFieldWithDefaultValue(
-		/* name */ "environment",
-		/* displayName */ "Environment",
-		/* description */ "The Azure environment.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* defaultValue */ "public",
-		/* envVars */ []string{
-			"ARM_ENVIRONMENT",
-		},
-		/* dependsOn */ []string{},
-	); err != nil {
-		return err
-	}
 	envList := make([]string, 0, len(environments))
 	for k := range environments {
 		envList = append(envList, k)
 	}
-	field.(*forms.InputField).SetAcceptedValues(&envList, "Not a valid Azure environment.")
 
-	if _, err = form.NewInputField(
-		/* name */ "subscription_id",
-		/* displayName */ "Subscription ID",
-		/* description */ "The Azure subscription ID.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	form = forms_config.CloudConfigForms.NewGroup(p.name, "Microsoft Azure Cloud Computing Platform")
+
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:         "environment",
+		DisplayName:  "Environment",
+		Description:  "The Azure environment.",
+		InputType:    forms.String,
+		DefaultValue: utils.PtrToStr("public"),
+		EnvVars: []string{
+			"ARM_ENVIRONMENT",
+		},
+		AcceptedValues:             envList,
+		AcceptedValuesErrorMessage: "Not a valid Azure environment.",
+	}); err != nil {
+		return err
+	}
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "subscription_id",
+		DisplayName: "Subscription ID",
+		Description: "The Azure subscription ID.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"ARM_SUBSCRIPTION_ID",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(
-		/* name */ "client_id",
-		/* displayName */ "Client ID",
-		/* description */ "The Client ID or Application ID of the Azure Service Principal.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "client_id",
+		DisplayName: "Client ID",
+		Description: "The Client ID or Application ID of the Azure Service Principal.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"ARM_CLIENT_ID",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-
-	if field, err = form.NewInputField(
-		/* name */ "client_secret",
-		/* displayName */ "Client Secret",
-		/* description */ "The Client Secret or Password of the Azure Service Principal.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "client_secret",
+		DisplayName: "Client Secret",
+		Description: "The Client Secret or Password of the Azure Service Principal.",
+		InputType:   forms.String,
+		Sensitive:   true,
+		EnvVars: []string{
 			"ARM_CLIENT_SECRET",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetSensitive(true)
-
-	if _, err = form.NewInputField(
-		/* name */ "tenant_id",
-		/* displayName */ "Tenant ID",
-		/* description */ "The Tenant ID from the Azure Service Principal.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "tenant_id",
+		DisplayName: "Tenant ID",
+		Description: "The Tenant ID from the Azure Service Principal.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"ARM_TENANT_ID",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
 
 	// Default resource group and location
 
-	if _, err = form.NewInputFieldWithDefaultValue(
-		/* name */ "default_resource_group",
-		/* displayName */ "Default Resource Group",
-		/* description */ "Resource group where common resources will be created.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* defaultValue */ fmt.Sprintf(
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "default_resource_group",
+		DisplayName: "Default Resource Group",
+		Description: "Resource group where common resources will be created.",
+		InputType:   forms.String,
+		DefaultValue: utils.PtrToStr(fmt.Sprintf(
 			"cb_default_%s",
 			strings.ReplaceAll(uuid.New().String(), "-", ""),
-		),
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+		)),
+	}); err != nil {
 		return err
 	}
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:         "default_location",
+		DisplayName:  "Default Location or Region",
+		Description:  "The location of the default resource group.",
+		InputType:    forms.String,
+		DefaultValue: utils.PtrToStr("eastus"),
 
-	if field, err = form.NewInputFieldWithDefaultValue(
-		/* name */ "default_location",
-		/* displayName */ "Default Location or Region",
-		/* description */ "The location of the default resource group.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* defaultValue */ "eastus",
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+		AcceptedValues:             regionList,
+		AcceptedValuesErrorMessage: "Not a valid AWS region.",
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetAcceptedValues(&rr, "Not a valid AWS region.")
 
 	return nil
 }

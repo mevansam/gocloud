@@ -93,15 +93,14 @@ func (p *googleProvider) createGoogleInputForm() error {
 	}
 
 	var (
-		err   error
-		form  *forms.InputGroup
-		field forms.Input
+		err  error
+		form *forms.InputGroup
 	)
 
 	regions := p.Regions()
-	rr := make([]string, len(regions))
+	regionList := make([]string, len(regions))
 	for i, r := range regions {
-		rr[i] = r.Name
+		regionList[i] = r.Name
 	}
 
 	form = forms_config.CloudConfigForms.NewGroup(p.name, "Google Cloud Platform")
@@ -113,89 +112,78 @@ func (p *googleProvider) createGoogleInputForm() error {
 		/* groupId */ 1,
 	)
 
-	if _, err = form.NewInputGroupField(
-		/* name */ "credentials",
-		/* displayName */ "Credentials",
-		/* description */ "The contents of a service account key file in JSON format.",
-		/* groupId */ 1,
-		/* inputType */ forms.String,
-		/* valueFromFile */ true,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:          "credentials",
+		DisplayName:   "Credentials",
+		Description:   "The contents of a service account key file in JSON format.",
+		GroupID:       1,
+		InputType:     forms.String,
+		ValueFromFile: true,
+		EnvVars: []string{
 			"GOOGLE_CREDENTIALS",
 			"GOOGLE_CLOUD_KEYFILE_JSON",
 			"GCLOUD_KEYFILE_JSON",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-
-	if field, err = form.NewInputGroupField(
-		/* name */ "access_token",
-		/* displayName */ "Access Token",
-		/* description */ "A temporary OAuth 2.0 access token obtained from the Google Authorization server.",
-		/* groupId */ 1,
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "access_token",
+		DisplayName: "Access Token",
+		Description: "A temporary OAuth 2.0 access token obtained from the Google Authorization server.",
+		GroupID:     1,
+		InputType:   forms.String,
+		Sensitive:   true,
+		EnvVars: []string{
 			"GOOGLE_OAUTH_ACCESS_TOKEN",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetSensitive(true)
 
-	if _, err = form.NewInputField(
-		/* name */ "project",
-		/* displayName */ "Project",
-		/* description */ "The Google Cloud Platform project to manage resources in.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "project",
+		DisplayName: "Project",
+		Description: "The Google Cloud Platform project to manage resources in.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"GOOGLE_PROJECT",
 			"GOOGLE_CLOUD_PROJECT",
 			"GCLOUD_PROJECT",
 			"CLOUDSDK_CORE_PROJECT",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
 	if err = form.AddFieldValueHint("project", "field://credentials/project_id"); err != nil {
 		return err
 	}
-
-	if field, err = form.NewInputField(
-		/* name */ "region",
-		/* displayName */ "Region",
-		/* description */ "The default region to manage resources in.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "region",
+		DisplayName: "Region",
+		Description: "The default region to manage resources in.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"GOOGLE_REGION",
 			"GCLOUD_REGION",
 			"CLOUDSDK_COMPUTE_REGION",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+		AcceptedValues:             regionList,
+		AcceptedValuesErrorMessage: "Not a valid Google Cloud region.",
+	}); err != nil {
 		return err
 	}
-	field.(*forms.InputField).SetAcceptedValues(&rr, "Not a valid Google Cloud region.")
-
-	if _, err = form.NewInputField(
-		/* name */ "zone",
-		/* displayName */ "Zone",
-		/* description */ "The default zone to manage resources in.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "zone",
+		DisplayName: "Zone",
+		Description: "The default zone to manage resources in.",
+		InputType:   forms.String,
+		EnvVars: []string{
 			"GOOGLE_ZONE",
 			"GCLOUD_ZONE",
 			"CLOUDSDK_COMPUTE_ZONE",
 		},
-		/* dependsOn */ []string{},
-	); err != nil {
+	}); err != nil {
 		return err
 	}
 

@@ -46,7 +46,7 @@ var _ = Describe("Google Cloud Storage Backend Tests", func() {
 
 		It("saves configuration values", func() {
 			test_data.ParseConfigDocument(gcsBackend, gcsConfigDocument, "gcsBackend")
-			test_data.MarshalConfigDocumentAndValidate(gcsBackend, "backend", "gcsBackend", gcsConfigDocument)
+			test_data.MarshalConfigDocumentAndValidate(gcsBackend, "gcsBackend", gcsConfigDocument)
 		})
 	})
 
@@ -69,9 +69,7 @@ CONFIGURATION DATA INPUT REFERENCE
 const gcsConfigDocument = `
 {
 	"cloud": {
-		"backend": {
-			"gcsBackend": ` + test_data.GCSBackendConfig + `
-		}
+		"gcsBackend": ` + test_data.GCSBackendConfig + `
 	}
 }
 `

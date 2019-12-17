@@ -54,26 +54,20 @@ func (p *gcsBackend) createGCSInputForm() error {
 
 	form = forms_config.CloudConfigForms.NewGroup(p.name, "Google Cloud Storage Backend")
 
-	if _, err = form.NewInputField(
-		/* name */ "bucket",
-		/* displayName */ "Bucket",
-		/* description */ "The GCS bucket to store state in.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "bucket",
+		DisplayName: "Bucket",
+		Description: "The GCS bucket to store state in.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(
-		/* name */ "prefix",
-		/* displayName */ "Prefix",
-		/* description */ "The prefix to use in the name of the state object.",
-		/* inputType */ forms.String,
-		/* valueFromFile */ false,
-		/* envVars */ []string{},
-		/* dependsOn */ []string{},
-	); err != nil {
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:        "prefix",
+		DisplayName: "Prefix",
+		Description: "The prefix to use in the name of the state object.",
+		InputType:   forms.String,
+	}); err != nil {
 		return err
 	}
 

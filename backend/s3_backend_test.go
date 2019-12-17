@@ -46,7 +46,7 @@ var _ = Describe("S3 Backend Tests", func() {
 
 		It("saves configuration values", func() {
 			test_data.ParseConfigDocument(s3Backend, s3ConfigDocument, "s3Backend")
-			test_data.MarshalConfigDocumentAndValidate(s3Backend, "backend", "s3Backend", s3ConfigDocument)
+			test_data.MarshalConfigDocumentAndValidate(s3Backend, "s3Backend", s3ConfigDocument)
 		})
 	})
 
@@ -69,9 +69,7 @@ CONFIGURATION DATA INPUT REFERENCE
 const s3ConfigDocument = `
 {
 	"cloud": {
-		"backend": {
-			"s3Backend": ` + test_data.S3BackendConfig + `
-		}
+		"s3Backend": ` + test_data.S3BackendConfig + `
 	}
 }
 `

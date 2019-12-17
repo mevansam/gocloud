@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"github.com/mevansam/gocloud/provider"
 	config_mocks "github.com/mevansam/goforms/config/mocks"
 )
 
@@ -20,4 +21,12 @@ func (f *FakeCloudBackend) Name() string {
 
 func (f *FakeCloudBackend) Description() string {
 	return "fake cloud backend for testing"
+}
+
+func (f *FakeCloudBackend) GetProviderType() string {
+	return "fake"
+}
+
+func (f *FakeCloudBackend) Initialize(provider provider.CloudProvider) error {
+	return nil
 }

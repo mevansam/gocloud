@@ -40,7 +40,7 @@ func ParseConfigDocument(
 
 func MarshalConfigDocumentAndValidate(
 	config config.Configurable,
-	configType, configKey string,
+	configKey string,
 	expectedConfigDocument string,
 ) {
 
@@ -54,8 +54,6 @@ func MarshalConfigDocumentAndValidate(
 
 	// marshal config document
 	buffer.WriteString("{\"cloud\": {\"")
-	buffer.WriteString(configType)
-	buffer.WriteString("\": {\"")
 	buffer.WriteString(configKey)
 	buffer.WriteString("\": ")
 
@@ -63,7 +61,7 @@ func MarshalConfigDocumentAndValidate(
 	err = encoder.Encode(config)
 	Expect(err).NotTo(HaveOccurred())
 
-	buffer.WriteString("}}}")
+	buffer.WriteString("}}")
 
 	// read marshalled config document back as a map of key/value pairs
 	actual := make(map[string]interface{})
