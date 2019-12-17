@@ -51,6 +51,22 @@ func NewCloudBackend(name string) (CloudBackend, error) {
 	return newBackend()
 }
 
+// out: a map of included cloud provider templates
+func NewCloudBackendTemplates() (map[string]CloudBackend, error) {
+
+	var (
+		err error
+	)
+
+	templates := make(map[string]CloudBackend)
+	for name, newBackend := range backendNames {
+		if templates[name], err = newBackend(); err != nil {
+			return nil, err
+		}
+	}
+	return templates, nil
+}
+
 func IsValidCloudBackend(name string) bool {
 	_, ok := backendNames[name]
 	return ok
