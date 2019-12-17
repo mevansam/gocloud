@@ -15,6 +15,22 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var _ = Describe("Cloud Provider Tests", func() {
+
+	Context("cloud provider templates", func() {
+
+		It("validates the available cloud provider templates", func() {
+
+			providerTemplates, err := provider.NewCloudProviderTemplates()
+			Expect(err).NotTo(HaveOccurred())
+
+			for name, template := range providerTemplates {
+				Expect(name).To(Equal(template.Name()))
+			}
+		})
+	})
+})
+
 func testConfigReferenceOutput(cloudProvider provider.CloudProvider, expected string) {
 
 	var (

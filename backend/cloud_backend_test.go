@@ -14,6 +14,23 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var _ = Describe("Cloud Backend Tests", func() {
+
+	Context("cloud backend templates", func() {
+
+		It("validates the available cloud backend templates", func() {
+
+			backendTemplates, err := backend.NewCloudBackendTemplates()
+			Expect(err).NotTo(HaveOccurred())
+
+			for name, template := range backendTemplates {
+				Expect(name).To(Equal(template.Name()))
+				Expect(backend.IsValidCloudBackend(template.Name())).To(BeTrue())
+			}
+		})
+	})
+})
+
 func testConfigReferenceOutput(cloudBackend backend.CloudBackend, expected string) {
 
 	var (
