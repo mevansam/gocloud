@@ -79,6 +79,7 @@ func (p *awsProvider) createAWSInputForm() error {
 		EnvVars: []string{
 			"AWS_ACCESS_KEY_ID",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -91,20 +92,7 @@ func (p *awsProvider) createAWSInputForm() error {
 		EnvVars: []string{
 			"AWS_SECRET_ACCESS_KEY",
 		},
-	}); err != nil {
-		return err
-	}
-	if _, err = form.NewInputField(forms.FieldAttributes{
-		Name:         "region",
-		DisplayName:  "Region",
-		Description:  "The AWS region to create resources in.",
-		InputType:    forms.String,
-		DefaultValue: utils.PtrToStr("us-east-1"),
-		EnvVars: []string{
-			"AWS_DEFAULT_REGION",
-		},
-		AcceptedValues:             regionList,
-		AcceptedValuesErrorMessage: "Not a valid AWS region.",
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -117,6 +105,22 @@ func (p *awsProvider) createAWSInputForm() error {
 		EnvVars: []string{
 			"AWS_SESSION_TOKEN",
 		},
+		Tags: []string{"provider"},
+	}); err != nil {
+		return err
+	}
+	if _, err = form.NewInputField(forms.FieldAttributes{
+		Name:         "region",
+		DisplayName:  "Region",
+		Description:  "The AWS region to create resources in.",
+		InputType:    forms.String,
+		DefaultValue: utils.PtrToStr("us-east-1"),
+		EnvVars: []string{
+			"AWS_DEFAULT_REGION",
+		},
+		Tags:                       []string{"provider", "target"},
+		AcceptedValues:             regionList,
+		AcceptedValuesErrorMessage: "Not a valid AWS region.",
 	}); err != nil {
 		return err
 	}

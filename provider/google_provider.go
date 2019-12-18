@@ -124,6 +124,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 			"GOOGLE_CLOUD_KEYFILE_JSON",
 			"GCLOUD_KEYFILE_JSON",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -137,6 +138,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 		EnvVars: []string{
 			"GOOGLE_OAUTH_ACCESS_TOKEN",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -152,6 +154,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 			"GCLOUD_PROJECT",
 			"CLOUDSDK_CORE_PROJECT",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -168,6 +171,8 @@ func (p *googleProvider) createGoogleInputForm() error {
 			"GCLOUD_REGION",
 			"CLOUDSDK_COMPUTE_REGION",
 		},
+		Tags: []string{"provider", "target"},
+
 		AcceptedValues:             regionList,
 		AcceptedValuesErrorMessage: "Not a valid Google Cloud region.",
 	}); err != nil {
@@ -183,6 +188,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 			"GCLOUD_ZONE",
 			"CLOUDSDK_COMPUTE_ZONE",
 		},
+		Tags: []string{"provider", "target"},
 	}); err != nil {
 		return err
 	}

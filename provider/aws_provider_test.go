@@ -128,10 +128,10 @@ CONFIGURATION DATA INPUT REFERENCE
                environment variable AWS_ACCESS_KEY_ID if not provided.
 * Secret Key - The AWS user account's secret key. It will be sourced from the
                environment variable AWS_SECRET_ACCESS_KEY if not provided.
-* Region     - The AWS region to create resources in. It will be sourced from
-               the environment variable AWS_DEFAULT_REGION if not provided.
 * Token      - AWS multi-factor authentication token. It will be sourced from
-               the environment variable AWS_SESSION_TOKEN if not provided.`
+               the environment variable AWS_SESSION_TOKEN if not provided.
+* Region     - The AWS region to create resources in. It will be sourced from
+               the environment variable AWS_DEFAULT_REGION if not provided.`
 
 const awsConfigDocument = `
 {

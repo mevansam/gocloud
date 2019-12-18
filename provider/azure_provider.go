@@ -109,6 +109,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		EnvVars: []string{
 			"ARM_ENVIRONMENT",
 		},
+		Tags:                       []string{"provider"},
 		AcceptedValues:             envList,
 		AcceptedValuesErrorMessage: "Not a valid Azure environment.",
 	}); err != nil {
@@ -122,6 +123,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		EnvVars: []string{
 			"ARM_SUBSCRIPTION_ID",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -133,6 +135,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		EnvVars: []string{
 			"ARM_CLIENT_ID",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -145,6 +148,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		EnvVars: []string{
 			"ARM_CLIENT_SECRET",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -156,6 +160,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		EnvVars: []string{
 			"ARM_TENANT_ID",
 		},
+		Tags: []string{"provider"},
 	}); err != nil {
 		return err
 	}
@@ -171,6 +176,7 @@ func (p *azureProvider) createAzureInputForm() error {
 			"cb_default_%s",
 			strings.ReplaceAll(uuid.New().String(), "-", ""),
 		)),
+		Tags: []string{"provider", "target"},
 	}); err != nil {
 		return err
 	}
@@ -180,6 +186,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		Description:  "The location of the default resource group.",
 		InputType:    forms.String,
 		DefaultValue: utils.PtrToStr("eastus"),
+		Tags:         []string{"provider", "target"},
 
 		AcceptedValues:             regionList,
 		AcceptedValuesErrorMessage: "Not a valid AWS region.",
