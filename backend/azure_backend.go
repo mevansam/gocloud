@@ -4,6 +4,7 @@ import (
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/utils"
 
 	forms_config "github.com/mevansam/gocloud/forms"
 )
@@ -115,7 +116,10 @@ func (b *azurermBackend) Copy() (config.Configurable, error) {
 	configCopy := copy.(*azurermBackend).cloudBackend.
 		config.(*azurermBackendConfig)
 
-	*configCopy = *config
+	configCopy.ResourceGroupName = utils.CopyStrPtr(config.ResourceGroupName)
+	configCopy.StorageAccountName = utils.CopyStrPtr(config.StorageAccountName)
+	configCopy.ContainerName = utils.CopyStrPtr(config.ContainerName)
+	configCopy.Key = utils.CopyStrPtr(config.Key)
 
 	return copy, nil
 }

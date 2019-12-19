@@ -147,7 +147,10 @@ func (p *awsProvider) Copy() (config.Configurable, error) {
 	configCopy := copy.(*awsProvider).cloudProvider.
 		config.(*awsProviderConfig)
 
-	*configCopy = *config
+	configCopy.AccessKey = utils.CopyStrPtr(config.AccessKey)
+	configCopy.SecretKey = utils.CopyStrPtr(config.SecretKey)
+	configCopy.Region = utils.CopyStrPtr(config.Region)
+	configCopy.Token = utils.CopyStrPtr(config.Token)
 
 	return copy, nil
 }

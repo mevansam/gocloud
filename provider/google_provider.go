@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mevansam/goutils/utils"
+
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/option"
 
@@ -215,7 +217,11 @@ func (p *googleProvider) Copy() (config.Configurable, error) {
 	configCopy := copy.(*googleProvider).cloudProvider.
 		config.(*googleProviderConfig)
 
-	*configCopy = *config
+	configCopy.Authentication.Credentials = utils.CopyStrPtr(config.Authentication.Credentials)
+	configCopy.Authentication.AccessToken = utils.CopyStrPtr(config.Authentication.AccessToken)
+	configCopy.Project = utils.CopyStrPtr(config.Project)
+	configCopy.Region = utils.CopyStrPtr(config.Region)
+	configCopy.Zone = utils.CopyStrPtr(config.Zone)
 
 	return copy, nil
 }

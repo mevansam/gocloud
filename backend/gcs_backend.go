@@ -4,6 +4,7 @@ import (
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/utils"
 
 	forms_config "github.com/mevansam/gocloud/forms"
 )
@@ -95,7 +96,8 @@ func (b *gcsBackend) Copy() (config.Configurable, error) {
 	configCopy := copy.(*gcsBackend).cloudBackend.
 		config.(*gcsBackendConfig)
 
-	*configCopy = *config
+	configCopy.Bucket = utils.CopyStrPtr(config.Bucket)
+	configCopy.Prefix = utils.CopyStrPtr(config.Prefix)
 
 	return copy, nil
 }

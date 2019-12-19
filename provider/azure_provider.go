@@ -232,7 +232,13 @@ func (p *azureProvider) Copy() (config.Configurable, error) {
 	configCopy := copy.(*azureProvider).cloudProvider.
 		config.(*azureProviderConfig)
 
-	*configCopy = *config
+	configCopy.Environment = utils.CopyStrPtr(config.Environment)
+	configCopy.SubscriptionID = utils.CopyStrPtr(config.SubscriptionID)
+	configCopy.ClientID = utils.CopyStrPtr(config.ClientID)
+	configCopy.ClientSecret = utils.CopyStrPtr(config.ClientSecret)
+	configCopy.TenantID = utils.CopyStrPtr(config.TenantID)
+	configCopy.DefaultResourceGroup = utils.CopyStrPtr(config.DefaultResourceGroup)
+	configCopy.DefaultLocation = utils.CopyStrPtr(config.DefaultLocation)
 
 	return copy, nil
 }
