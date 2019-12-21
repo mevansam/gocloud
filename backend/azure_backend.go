@@ -1,9 +1,12 @@
 package backend
 
 import (
+	"fmt"
+
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/logger"
 	"github.com/mevansam/goutils/utils"
 
 	forms_config "github.com/mevansam/gocloud/forms"
@@ -138,6 +141,52 @@ func (b *azurermBackend) IsValid() bool {
 
 // interface: backend/CloudBackend functions
 
-func (b *azurermBackend) Initialize(provider provider.CloudProvider) error {
+func (b *azurermBackend) Configure(
+	cloudProvider provider.CloudProvider,
+	storagePrefix, stateKey string,
+) error {
+
+	var (
+		err error
+
+		inputForm forms.InputForm
+
+		defaultResourceGroup *string
+		defaultLocation      *string
+	)
+
+	if cloudProvider.Name() != b.providerType {
+		return fmt.Errorf("the azurerm backend can only be used with an azure cloud provider")
+	}
+	if inputForm, err = cloudProvider.InputForm(); err != nil {
+		return err
+	}
+	if defaultResourceGroup, err = inputForm.GetFieldValue("default_resource_group"); err != nil {
+		return err
+	}
+	if defaultResourceGroup == nil {
+		return fmt.Errorf("azure provider's resource group cannot be empty")
+	}
+	if defaultLocation, err = inputForm.GetFieldValue("default_location"); err != nil {
+		return err
+	}
+	if defaultLocation == nil {
+		return fmt.Errorf("azure provider's location cannot be empty")
+	}
+
+	storageAccountName := provider.GetAzureStorageAccountName(cloudProvider)
+	containerName := fmt.Sprintf("%s-%s", storagePrefix, *defaultLocation)
+
+	config := b.cloudBackend.
+		config.(*azurermBackendConfig)
+	config.ResourceGroupName = defaultResourceGroup
+	config.StorageAccountName = &storageAccountName
+	config.ContainerName = &containerName
+	config.Key = &stateKey
+
+	logger.TraceMessage(
+		"AzureRM backend configured using provider attributes: %# v",
+		config)
+
 	return nil
 }

@@ -1,9 +1,12 @@
 package backend
 
 import (
+	"fmt"
+
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/logger"
 	"github.com/mevansam/goutils/utils"
 
 	forms_config "github.com/mevansam/gocloud/forms"
@@ -113,6 +116,41 @@ func (b *gcsBackend) IsValid() bool {
 
 // interface: backend/CloudBackend functions
 
-func (b *gcsBackend) Initialize(provider provider.CloudProvider) error {
+func (b *gcsBackend) Configure(
+	cloudProvider provider.CloudProvider,
+	storagePrefix, stateKey string,
+) error {
+
+	var (
+		err error
+
+		inputForm forms.InputForm
+		region    *string
+	)
+
+	if cloudProvider.Name() != b.providerType {
+		return fmt.Errorf("the gcs backend can only be used with a google cloud provider")
+	}
+	if inputForm, err = cloudProvider.InputForm(); err != nil {
+		return err
+	}
+	if region, err = inputForm.GetFieldValue("region"); err != nil {
+		return err
+	}
+	if region == nil {
+		return fmt.Errorf("google provider's region cannot be empty")
+	}
+
+	bucketName := fmt.Sprintf("%s-%s", storagePrefix, *region)
+
+	config := b.cloudBackend.
+		config.(*gcsBackendConfig)
+	config.Bucket = &bucketName
+	config.Prefix = &stateKey
+
+	logger.TraceMessage(
+		"GCS backend configured using provider attributes: %# v",
+		config)
+
 	return nil
 }

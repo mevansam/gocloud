@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/mevansam/gocloud/backend"
+	"github.com/mevansam/gocloud/provider"
+	"github.com/mevansam/goforms/forms"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -50,9 +52,48 @@ var _ = Describe("Google Cloud Storage Backend Tests", func() {
 		})
 	})
 
-	It("creates a copy of itself", func() {
-		test_data.ParseConfigDocument(gcsBackend, gcsConfigDocument, "gcsBackend")
-		test_data.CopyConfigAndValidate(gcsBackend, "bucket", "mystatebucket", "newbucket")
+	Context("initialization", func() {
+
+		It("the cloud provider must match the backend cloud requirement", func() {
+
+			azureProvider, err := provider.NewCloudProvider("azure")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(azureProvider).ToNot(BeNil())
+		})
+
+		It("can be inititialized using the correct cloud provider", func() {
+
+			var (
+				inputForm forms.InputForm
+				value     *string
+			)
+			googleProvider, err := provider.NewCloudProvider("google")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(googleProvider).ToNot(BeNil())
+			test_data.ParseConfigDocument(googleProvider, googleConfigDocument, "googleProvider")
+
+			err = gcsBackend.Configure(googleProvider, "mybackend", "mystatekey")
+			Expect(err).NotTo(HaveOccurred())
+
+			inputForm, err = gcsBackend.InputForm()
+			Expect(err).NotTo(HaveOccurred())
+
+			value, err = inputForm.GetFieldValue("bucket")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*value).To(Equal("mybackend-europe-west1"))
+
+			value, err = inputForm.GetFieldValue("prefix")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*value).To(Equal("mystatekey"))
+		})
+	})
+
+	Context("copying", func() {
+
+		It("can creates a copy of itself", func() {
+			test_data.ParseConfigDocument(gcsBackend, gcsConfigDocument, "gcsBackend")
+			test_data.CopyConfigAndValidate(gcsBackend, "bucket", "mystatebucket", "newbucket")
+		})
 	})
 })
 
@@ -70,6 +111,14 @@ const gcsConfigDocument = `
 {
 	"cloud": {
 		"gcsBackend": ` + test_data.GCSBackendConfig + `
+	}
+}
+`
+
+const googleConfigDocument = `
+{
+	"cloud": {
+		"googleProvider": ` + test_data.GoogleProviderConfig + `
 	}
 }
 `

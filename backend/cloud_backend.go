@@ -14,11 +14,12 @@ import (
 type CloudBackend interface {
 	config.Configurable
 
-	// the cloud provider that supports this backend
-	GetProviderType() string
-
-	// initializes the storage for this backend
-	Initialize(provider provider.CloudProvider) error
+	// configures the storage for this backend with common
+	// attributes fetched from a compatible provider
+	Configure(
+		cloudProvider provider.CloudProvider,
+		storagePrefix, stateKey string,
+	) error
 }
 
 // base cloud backend implementation

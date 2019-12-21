@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/mevansam/gocloud/backend"
+	"github.com/mevansam/gocloud/provider"
+	"github.com/mevansam/goforms/forms"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -50,9 +52,56 @@ var _ = Describe("Azure Backend Tests", func() {
 		})
 	})
 
-	It("creates a copy of itself", func() {
-		test_data.ParseConfigDocument(azurermBackend, azurermConfigDocument, "azurermBackend")
-		test_data.CopyConfigAndValidate(azurermBackend, "container_name", "mystatecontainer", "newcontainer")
+	Context("initialization", func() {
+
+		It("the cloud provider must match the backend cloud requirement", func() {
+
+			awsProvider, err := provider.NewCloudProvider("aws")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(awsProvider).ToNot(BeNil())
+		})
+
+		It("can be inititialized using the correct cloud provider", func() {
+
+			var (
+				inputForm forms.InputForm
+				value     *string
+			)
+			azureProvider, err := provider.NewCloudProvider("azure")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(azureProvider).ToNot(BeNil())
+			test_data.ParseConfigDocument(azureProvider, azureConfigDocument, "azureProvider")
+
+			err = azurermBackend.Configure(azureProvider, "mybackend", "mystatekey")
+			Expect(err).NotTo(HaveOccurred())
+
+			inputForm, err = azurermBackend.InputForm()
+			Expect(err).NotTo(HaveOccurred())
+
+			value, err = inputForm.GetFieldValue("resource_group_name")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*value).To(Equal("cb_default_b602e51d27ad4c338092464590d29aef"))
+
+			value, err = inputForm.GetFieldValue("storage_account_name")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*value).To(Equal("cbdefaultb602e51d27ad4c3"))
+
+			value, err = inputForm.GetFieldValue("container_name")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*value).To(Equal("mybackend-westus"))
+
+			value, err = inputForm.GetFieldValue("key")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(*value).To(Equal("mystatekey"))
+		})
+	})
+
+	Context("copying", func() {
+
+		It("can creates a copy of itself", func() {
+			test_data.ParseConfigDocument(azurermBackend, azurermConfigDocument, "azurermBackend")
+			test_data.CopyConfigAndValidate(azurermBackend, "container_name", "mystatecontainer", "newcontainer")
+		})
 	})
 })
 
@@ -76,6 +125,14 @@ const azurermConfigDocument = `
 {
 	"cloud": {
 		"azurermBackend": ` + test_data.AzureRMBackendConfig + `
+	}
+}
+`
+
+const azureConfigDocument = `
+{
+	"cloud": {
+		"azureProvider": ` + test_data.AzureProviderConfig + `
 	}
 }
 `
