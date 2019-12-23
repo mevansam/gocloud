@@ -210,6 +210,14 @@ func (p *awsProvider) Regions() []RegionInfo {
 	return regionInfoList
 }
 
+func (p *awsProvider) GetRegion() *string {
+
+	config := p.cloudProvider.
+		config.(*awsProviderConfig)
+
+	return config.Region
+}
+
 func (p *awsProvider) GetCompute() (cloud.Compute, error) {
 
 	if !p.isInitialized {

@@ -29,6 +29,9 @@ type CloudProvider interface {
 	// the cloud API is returned.
 	Regions() []RegionInfo
 
+	// The currently configured region for this provider
+	GetRegion() *string
+
 	// Returns the provider's compute entity
 	GetCompute() (cloud.Compute, error)
 

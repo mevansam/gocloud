@@ -408,6 +408,14 @@ func (p *azureProvider) Regions() []RegionInfo {
 	return regionInfoList
 }
 
+func (p *azureProvider) GetRegion() *string {
+
+	config := p.cloudProvider.
+		config.(*azureProviderConfig)
+
+	return config.DefaultLocation
+}
+
 func (p *azureProvider) GetCompute() (cloud.Compute, error) {
 
 	if !p.isInitialized {
