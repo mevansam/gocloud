@@ -41,7 +41,6 @@ type googleProviderConfig struct {
 
 	Project *string `json:"project,omitempty" form_field:"project"`
 	Region  *string `json:"region,omitempty" form_field:"region"`
-	Zone    *string `json:"zone,omitempty" form_field:"zone"`
 }
 
 var staticGoogleRegionMap = map[string]string{
@@ -180,20 +179,6 @@ func (p *googleProvider) createGoogleInputForm() error {
 	}); err != nil {
 		return err
 	}
-	if _, err = form.NewInputField(forms.FieldAttributes{
-		Name:        "zone",
-		DisplayName: "Zone",
-		Description: "The default zone to manage resources in.",
-		InputType:   forms.String,
-		EnvVars: []string{
-			"GOOGLE_ZONE",
-			"GCLOUD_ZONE",
-			"CLOUDSDK_COMPUTE_ZONE",
-		},
-		Tags: []string{"provider", "target"},
-	}); err != nil {
-		return err
-	}
 
 	return nil
 }
@@ -221,7 +206,6 @@ func (p *googleProvider) Copy() (config.Configurable, error) {
 	configCopy.Authentication.AccessToken = utils.CopyStrPtr(config.Authentication.AccessToken)
 	configCopy.Project = utils.CopyStrPtr(config.Project)
 	configCopy.Region = utils.CopyStrPtr(config.Region)
-	configCopy.Zone = utils.CopyStrPtr(config.Zone)
 
 	return copy, nil
 }
@@ -324,6 +308,14 @@ func (p *googleProvider) Regions() []RegionInfo {
 	return regionInfoList
 }
 
+func (p *googleProvider) GetRegion() *string {
+
+	config := p.cloudProvider.
+		config.(*googleProviderConfig)
+
+	return config.Region
+}
+
 func (p *googleProvider) GetCompute() (cloud.Compute, error) {
 
 	config := p.cloudProvider.
@@ -333,7 +325,6 @@ func (p *googleProvider) GetCompute() (cloud.Compute, error) {
 		p.computeService,
 		*config.Project,
 		*config.Region,
-		*config.Zone,
 	)
 }
 

@@ -43,7 +43,6 @@ func NewGoogleCompute(
 	service *compute.Service,
 	projectID string,
 	region string,
-	zone string,
 ) (Compute, error) {
 
 	return &googleCompute{
@@ -52,7 +51,6 @@ func NewGoogleCompute(
 
 		props: GoogleComputeProperties{
 			Region: region,
-			Zone:   zone,
 
 			// 5 minute timeout for
 			// start/stop operatons

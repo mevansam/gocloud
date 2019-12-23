@@ -115,8 +115,6 @@ func InitializeGoogleProvider(googleProvider provider.CloudProvider) {
 	Expect(err).NotTo(HaveOccurred())
 	err = inputForm.SetFieldValue("region", googleRegion)
 	Expect(err).NotTo(HaveOccurred())
-	err = inputForm.SetFieldValue("zone", googleZone)
-	Expect(err).NotTo(HaveOccurred())
 }
 
 // load azure regions/locations via API calls
