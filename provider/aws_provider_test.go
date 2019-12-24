@@ -6,6 +6,7 @@ import (
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
 	"github.com/mevansam/goutils/logger"
+	"github.com/mevansam/goutils/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -117,12 +118,12 @@ var _ = Describe("AWS Provider Tests", func() {
 	})
 })
 
-const awsInputDataReferenceOutput = `Cloud Provider Configuration
-============================
+const awsInputDataReferenceOutput = term.BOLD + `Cloud Provider Configuration
+============================` + term.NC + `
 
 Amazon Web Services Cloud Platform
 
-CONFIGURATION DATA INPUT REFERENCE
+` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
 * Access Key - The AWS user account's access key id. It will be sourced from the
                environment variable AWS_ACCESS_KEY_ID if not provided.

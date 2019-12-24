@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -146,12 +147,12 @@ var _ = Describe("Azure Provider Tests", func() {
 	})
 })
 
-const azureInputDataReferenceOutput = `Cloud Provider Configuration
-============================
+const azureInputDataReferenceOutput = term.BOLD + `Cloud Provider Configuration
+============================` + term.NC + `
 
 Microsoft Azure Cloud Computing Platform
 
-CONFIGURATION DATA INPUT REFERENCE
+` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
 * Environment                - The Azure environment. It will be sourced from
                                the environment variable ARM_ENVIRONMENT if not

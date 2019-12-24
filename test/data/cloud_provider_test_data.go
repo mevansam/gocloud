@@ -65,8 +65,7 @@ const GoogleProviderConfig = `
 		"access_token": "0640E5A6-8346-4F99-9ED7-7E384CCD0EAA"
 	},
 	"project": "my-google-project",
-	"region": "europe-west1",
-	"zone": "europe-west1-b"
+	"region": "europe-west1"
 }
 `
 
@@ -98,11 +97,6 @@ func ValidateGoogleConfigDocument(googleProvider provider.CloudProvider) {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(value).NotTo(BeNil())
 	Expect(*value).To(Equal("europe-west1"))
-
-	value, err = googleProvider.GetValue("zone")
-	Expect(err).NotTo(HaveOccurred())
-	Expect(value).NotTo(BeNil())
-	Expect(*value).To(Equal("europe-west1-b"))
 }
 
 // azure provider test data

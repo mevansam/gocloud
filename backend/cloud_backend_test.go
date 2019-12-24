@@ -73,7 +73,7 @@ func testConfigReferenceOutput(cloudBackend backend.CloudBackend, expected strin
 			"CONFIGURATION DATA INPUT REFERENCE",
 			inputForm)
 		Expect(err).NotTo(HaveOccurred())
-		tf.ShowInputReference(false, 0, 2, 80)
+		tf.ShowInputReference(ux.DescOnly, 0, 2, 80)
 
 		// close piped output
 		os.Stdout.Close()

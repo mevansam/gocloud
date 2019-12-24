@@ -6,6 +6,7 @@ import (
 	"github.com/mevansam/gocloud/backend"
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -97,12 +98,12 @@ var _ = Describe("S3 Backend Tests", func() {
 	})
 })
 
-const s3InputDataReferenceOutput = `Cloud Backend Configuration
-===========================
+const s3InputDataReferenceOutput = term.BOLD + `Cloud Backend Configuration
+===========================` + term.NC + `
 
 Amazon Web Services S3 Storage Backend
 
-CONFIGURATION DATA INPUT REFERENCE
+` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
 * Bucket - The S3 bucket to store state in.
 * Key    - The key with which to identify the state object in the bucket.`

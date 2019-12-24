@@ -6,6 +6,7 @@ import (
 	"github.com/mevansam/gocloud/backend"
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -105,12 +106,12 @@ var _ = Describe("Azure Backend Tests", func() {
 	})
 })
 
-const azurermInputDataReferenceOutput = `Cloud Backend Configuration
-===========================
+const azurermInputDataReferenceOutput = term.BOLD + `Cloud Backend Configuration
+===========================` + term.NC + `
 
 Azure Resource Manager Storage Backend
 
-CONFIGURATION DATA INPUT REFERENCE
+` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
 * Resource Group Name  - The Azure resource group name where storage resources
                          will be created.

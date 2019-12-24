@@ -6,6 +6,7 @@ import (
 	"github.com/mevansam/gocloud/backend"
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -97,12 +98,12 @@ var _ = Describe("Google Cloud Storage Backend Tests", func() {
 	})
 })
 
-const gcsInputDataReferenceOutput = `Cloud Backend Configuration
-===========================
+const gcsInputDataReferenceOutput = term.BOLD + `Cloud Backend Configuration
+===========================` + term.NC + `
 
 Google Cloud Storage Backend
 
-CONFIGURATION DATA INPUT REFERENCE
+` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
 * Bucket - The GCS bucket to store state in.
 * Prefix - The prefix to use in the name of the state object.`

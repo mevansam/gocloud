@@ -5,6 +5,7 @@ import (
 
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/forms"
+	"github.com/mevansam/goutils/term"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -123,12 +124,12 @@ var _ = Describe("Google Provider Tests", func() {
 	})
 })
 
-const googleInputDataReferenceOutput = `Cloud Provider Configuration
-============================
+const googleInputDataReferenceOutput = term.BOLD + `Cloud Provider Configuration
+============================` + term.NC + `
 
 Google Cloud Platform
 
-CONFIGURATION DATA INPUT REFERENCE
+` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
 * Provide one of the following for:
 
@@ -151,10 +152,7 @@ CONFIGURATION DATA INPUT REFERENCE
             provided.
 * Region  - The default region to manage resources in. It will be sourced from
             the environment variables GOOGLE_REGION, GCLOUD_REGION,
-            CLOUDSDK_COMPUTE_REGION if not provided.
-* Zone    - The default zone to manage resources in. It will be sourced from the
-            environment variables GOOGLE_ZONE, GCLOUD_ZONE,
-            CLOUDSDK_COMPUTE_ZONE if not provided.`
+            CLOUDSDK_COMPUTE_REGION if not provided.`
 
 const googleConfigDocument = `
 {
