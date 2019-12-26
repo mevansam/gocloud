@@ -96,7 +96,7 @@ var _ = Describe("Azure Provider Tests", func() {
 
 		It("retrieves the Azure region information and validates against static list", func() {
 
-			regionInfoList := azureProvider.Regions()
+			regionInfoList := azureProvider.GetRegions()
 			Expect(len(regionInfoList)).To(Equal(len(azurePublicLocations)))
 
 			for _, r := range regionInfoList {
@@ -110,7 +110,7 @@ var _ = Describe("Azure Provider Tests", func() {
 			err = azureProvider.Connect()
 			Expect(err).NotTo(HaveOccurred())
 
-			regionInfoList := azureProvider.Regions()
+			regionInfoList := azureProvider.GetRegions()
 			Expect(len(regionInfoList)).To(Equal(len(azurePublicLocations)))
 
 			for _, r := range regionInfoList {

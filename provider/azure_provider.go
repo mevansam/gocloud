@@ -87,7 +87,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		form *forms.InputGroup
 	)
 
-	regions := p.Regions()
+	regions := p.GetRegions()
 	regionList := make([]string, len(regions))
 	for i, r := range regions {
 		regionList[i] = r.Name
@@ -319,7 +319,15 @@ func (p *azureProvider) Connect() error {
 	return nil
 }
 
-func (p *azureProvider) Regions() []RegionInfo {
+func (p *azureProvider) Region() *string {
+
+	config := p.cloudProvider.
+		config.(*azureProviderConfig)
+
+	return config.DefaultLocation
+}
+
+func (p *azureProvider) GetRegions() []RegionInfo {
 
 	var (
 		err            error
@@ -406,14 +414,6 @@ func (p *azureProvider) Regions() []RegionInfo {
 	logger.TraceMessage("Pre-defined Azure location list: %# v", regionInfoList)
 
 	return regionInfoList
-}
-
-func (p *azureProvider) GetRegion() *string {
-
-	config := p.cloudProvider.
-		config.(*azureProviderConfig)
-
-	return config.DefaultLocation
 }
 
 func (p *azureProvider) GetCompute() (cloud.Compute, error) {

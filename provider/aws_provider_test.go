@@ -64,7 +64,7 @@ var _ = Describe("AWS Provider Tests", func() {
 
 			logger.DebugMessage("\nAWS regions retrieved from API call:")
 
-			for i, r := range awsProvider.Regions() {
+			for i, r := range awsProvider.GetRegions() {
 				logger.DebugMessage("  * %s - %s", r.Name, r.Description)
 				Expect(r.Name).To(Equal(expectedList[i][0]))
 				Expect(r.Description).To(Equal(expectedList[i][1]))

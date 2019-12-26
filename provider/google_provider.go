@@ -98,7 +98,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 		form *forms.InputGroup
 	)
 
-	regions := p.Regions()
+	regions := p.GetRegions()
 	regionList := make([]string, len(regions))
 	for i, r := range regions {
 		regionList[i] = r.Name
@@ -252,7 +252,15 @@ func (p *googleProvider) Connect() error {
 	return nil
 }
 
-func (p *googleProvider) Regions() []RegionInfo {
+func (p *googleProvider) Region() *string {
+
+	config := p.cloudProvider.
+		config.(*googleProviderConfig)
+
+	return config.Region
+}
+
+func (p *googleProvider) GetRegions() []RegionInfo {
 
 	var (
 		err error
@@ -306,14 +314,6 @@ func (p *googleProvider) Regions() []RegionInfo {
 
 	sortRegions(regionInfoList)
 	return regionInfoList
-}
-
-func (p *googleProvider) GetRegion() *string {
-
-	config := p.cloudProvider.
-		config.(*googleProviderConfig)
-
-	return config.Region
 }
 
 func (p *googleProvider) GetCompute() (cloud.Compute, error) {

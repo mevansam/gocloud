@@ -23,14 +23,14 @@ type CloudProvider interface {
 	// configured credentials
 	Connect() error
 
+	// The currently configured region for this provider
+	Region() *string
+
 	// List of regions for the client. If the provider
 	// instances is not configured then a static list
 	// is returned. Otherwise the list retrieved from
 	// the cloud API is returned.
-	Regions() []RegionInfo
-
-	// The currently configured region for this provider
-	GetRegion() *string
+	GetRegions() []RegionInfo
 
 	// Returns the provider's compute entity
 	GetCompute() (cloud.Compute, error)

@@ -118,7 +118,7 @@ func InitializeGoogleProvider(googleProvider provider.CloudProvider) {
 }
 
 // load azure regions/locations via API calls
-func GoogleRegions() []string {
+func GoogleGetRegions() []string {
 
 	if googleRegions == nil {
 		googleRegions = []string{}

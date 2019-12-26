@@ -39,7 +39,7 @@ var _ = Describe("Google Provider Tests", func() {
 
 		BeforeEach(func() {
 			test_helpers.InitializeGoogleProvider(googleProvider)
-			googleRegions = test_helpers.GoogleRegions()
+			googleRegions = test_helpers.GoogleGetRegions()
 		})
 
 		It("retrieves the Google region information", func() {
@@ -50,7 +50,7 @@ var _ = Describe("Google Provider Tests", func() {
 				acceptedValues   []string
 			)
 
-			regionList := googleProvider.Regions()
+			regionList := googleProvider.GetRegions()
 			for i, r := range regionList {
 				Expect(r.Name).To(Equal(googleRegions[i]))
 			}
@@ -80,7 +80,7 @@ var _ = Describe("Google Provider Tests", func() {
 			err = googleProvider.Connect()
 			Expect(err).NotTo(HaveOccurred())
 
-			regionInfoList := googleProvider.Regions()
+			regionInfoList := googleProvider.GetRegions()
 			Expect(len(regionInfoList)).To(Equal(len(googleRegions)))
 
 			for _, r := range regionInfoList {

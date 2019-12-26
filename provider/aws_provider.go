@@ -63,7 +63,7 @@ func (p *awsProvider) createAWSInputForm() error {
 		form *forms.InputGroup
 	)
 
-	regions := p.Regions()
+	regions := p.GetRegions()
 	regionList := make([]string, len(regions))
 	for i, r := range regions {
 		regionList[i] = r.Name
@@ -196,7 +196,15 @@ func (p *awsProvider) Connect() error {
 	return err
 }
 
-func (p *awsProvider) Regions() []RegionInfo {
+func (p *awsProvider) Region() *string {
+
+	config := p.cloudProvider.
+		config.(*awsProviderConfig)
+
+	return config.Region
+}
+
+func (p *awsProvider) GetRegions() []RegionInfo {
 
 	regionInfoList := []RegionInfo{}
 	for _, r := range endpoints.AwsPartition().Regions() {
@@ -208,14 +216,6 @@ func (p *awsProvider) Regions() []RegionInfo {
 	}
 	sortRegions(regionInfoList)
 	return regionInfoList
-}
-
-func (p *awsProvider) GetRegion() *string {
-
-	config := p.cloudProvider.
-		config.(*awsProviderConfig)
-
-	return config.Region
 }
 
 func (p *awsProvider) GetCompute() (cloud.Compute, error) {
