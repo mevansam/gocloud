@@ -28,6 +28,9 @@ func (f *FakeCloudBackend) GetProviderType() string {
 	return "fake"
 }
 
-func (f *FakeCloudBackend) Initialize(provider provider.CloudProvider) error {
+func (f *FakeCloudBackend) Configure(
+	cloudProvider provider.CloudProvider,
+	storagePrefix, stateKey string,
+) error {
 	return nil
 }
