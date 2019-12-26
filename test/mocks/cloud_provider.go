@@ -5,8 +5,9 @@ import (
 
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/gocloud/provider"
+	"github.com/mevansam/goutils/utils"
 
-	config_mocks "github.com/mevansam/goforms/config/mocks"
+	config_mocks "github.com/mevansam/goforms/test/mocks"
 )
 
 type FakeCloudProvider struct {
@@ -31,6 +32,9 @@ func (f *FakeCloudProvider) Description() string {
 	return "fake cloud provider for testing"
 }
 
+func (f *FakeCloudProvider) Region() *string {
+	return utils.PtrToStr("us-east-1")
+}
 func (f *FakeCloudProvider) GetRegions() []provider.RegionInfo {
 	return []provider.RegionInfo{}
 }

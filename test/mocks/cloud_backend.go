@@ -2,7 +2,8 @@ package mocks
 
 import (
 	"github.com/mevansam/gocloud/provider"
-	config_mocks "github.com/mevansam/goforms/config/mocks"
+
+	config_mocks "github.com/mevansam/goforms/test/mocks"
 )
 
 type FakeCloudBackend struct {
