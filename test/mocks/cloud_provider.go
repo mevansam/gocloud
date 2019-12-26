@@ -31,7 +31,7 @@ func (f *FakeCloudProvider) Description() string {
 	return "fake cloud provider for testing"
 }
 
-func (f *FakeCloudProvider) Regions() []provider.RegionInfo {
+func (f *FakeCloudProvider) GetRegions() []provider.RegionInfo {
 	return []provider.RegionInfo{}
 }
 
