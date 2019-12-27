@@ -172,7 +172,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 			"GCLOUD_REGION",
 			"CLOUDSDK_COMPUTE_REGION",
 		},
-		Tags: []string{"provider", "target"},
+		Tags: []string{"provider", "target-undeployed"},
 
 		AcceptedValues:             regionList,
 		AcceptedValuesErrorMessage: "Not a valid Google Cloud region.",

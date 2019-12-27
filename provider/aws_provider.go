@@ -118,7 +118,7 @@ func (p *awsProvider) createAWSInputForm() error {
 		EnvVars: []string{
 			"AWS_DEFAULT_REGION",
 		},
-		Tags:                       []string{"provider", "target"},
+		Tags:                       []string{"provider", "target-undeployed"},
 		AcceptedValues:             regionList,
 		AcceptedValuesErrorMessage: "Not a valid AWS region.",
 	}); err != nil {

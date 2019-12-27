@@ -63,7 +63,7 @@ func (b *s3Backend) createS3InputForm() error {
 		DisplayName: "Bucket",
 		Description: "The S3 bucket to store state in.",
 		InputType:   forms.String,
-		Tags:        []string{"backend", "target"},
+		Tags:        []string{"backend", "target-undeployed"},
 	}); err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (b *s3Backend) createS3InputForm() error {
 		DisplayName: "Key",
 		Description: "The key with which to identify the state object in the bucket.",
 		InputType:   forms.String,
-		Tags:        []string{"backend", "target"},
+		Tags:        []string{"backend", "target-undeployed"},
 	}); err != nil {
 		return err
 	}

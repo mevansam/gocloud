@@ -63,7 +63,7 @@ func (p *gcsBackend) createGCSInputForm() error {
 		DisplayName: "Bucket",
 		Description: "The GCS bucket to store state in.",
 		InputType:   forms.String,
-		Tags:        []string{"backend", "target"},
+		Tags:        []string{"backend", "target-undeployed"},
 	}); err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (p *gcsBackend) createGCSInputForm() error {
 		DisplayName: "Prefix",
 		Description: "The prefix to use in the name of the state object.",
 		InputType:   forms.String,
-		Tags:        []string{"backend", "target"},
+		Tags:        []string{"backend", "target-undeployed"},
 	}); err != nil {
 		return err
 	}

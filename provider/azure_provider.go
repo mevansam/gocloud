@@ -176,7 +176,7 @@ func (p *azureProvider) createAzureInputForm() error {
 			"cb_default_%s",
 			strings.ReplaceAll(uuid.New().String(), "-", ""),
 		)),
-		Tags: []string{"provider", "target"},
+		Tags: []string{"provider", "target-undeployed"},
 	}); err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (p *azureProvider) createAzureInputForm() error {
 		Description:  "The location of the default resource group.",
 		InputType:    forms.String,
 		DefaultValue: utils.PtrToStr("eastus"),
-		Tags:         []string{"provider", "target"},
+		Tags:         []string{"provider", "target-undeployed"},
 
 		AcceptedValues:             regionList,
 		AcceptedValuesErrorMessage: "Not a valid AWS region.",

@@ -83,7 +83,7 @@ func (b *azurermBackend) createAzureRMInputForm() error {
 		DisplayName: "Container Name",
 		Description: "The name of the storage container where state will be saved.",
 		InputType:   forms.String,
-		Tags:        []string{"backend", "target"},
+		Tags:        []string{"backend", "target-undeployed"},
 	}); err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (b *azurermBackend) createAzureRMInputForm() error {
 		DisplayName: "Key",
 		Description: "The key with which to identify the state blob in the container.",
 		InputType:   forms.String,
-		Tags:        []string{"backend", "target"},
+		Tags:        []string{"backend", "target-undeployed"},
 	}); err != nil {
 		return err
 	}
