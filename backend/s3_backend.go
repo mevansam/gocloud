@@ -147,6 +147,10 @@ func (b *s3Backend) Configure(
 	config.Bucket = &bucketName
 	config.Key = &stateKey
 
+	// rebind fields
+	if _, err = b.InputForm(); err != nil {
+		return err
+	}
 	logger.TraceMessage(
 		"S3 backend configured using provider attributes: %# v",
 		config)

@@ -148,6 +148,10 @@ func (b *gcsBackend) Configure(
 	config.Bucket = &bucketName
 	config.Prefix = &stateKey
 
+	// rebind fields
+	if _, err = b.InputForm(); err != nil {
+		return err
+	}
 	logger.TraceMessage(
 		"GCS backend configured using provider attributes: %# v",
 		config)

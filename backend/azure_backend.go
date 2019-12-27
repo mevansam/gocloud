@@ -184,6 +184,10 @@ func (b *azurermBackend) Configure(
 	config.ContainerName = &containerName
 	config.Key = &stateKey
 
+	// rebind fields
+	if _, err = b.InputForm(); err != nil {
+		return err
+	}
 	logger.TraceMessage(
 		"AzureRM backend configured using provider attributes: %# v",
 		config)
