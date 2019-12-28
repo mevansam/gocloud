@@ -34,3 +34,7 @@ func (f *FakeCloudBackend) Configure(
 ) error {
 	return nil
 }
+
+func (f *FakeCloudBackend) GetStorageInstanceName() string {
+	return "fake"
+}

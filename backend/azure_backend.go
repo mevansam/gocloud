@@ -194,3 +194,7 @@ func (b *azurermBackend) Configure(
 
 	return nil
 }
+
+func (b *azurermBackend) GetStorageInstanceName() string {
+	return *b.cloudBackend.config.(*azurermBackendConfig).ContainerName
+}

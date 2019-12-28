@@ -158,3 +158,7 @@ func (b *gcsBackend) Configure(
 
 	return nil
 }
+
+func (b *gcsBackend) GetStorageInstanceName() string {
+	return *b.cloudBackend.config.(*gcsBackendConfig).Bucket
+}

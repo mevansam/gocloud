@@ -157,3 +157,7 @@ func (b *s3Backend) Configure(
 
 	return nil
 }
+
+func (b *s3Backend) GetStorageInstanceName() string {
+	return *b.cloudBackend.config.(*s3BackendConfig).Bucket
+}

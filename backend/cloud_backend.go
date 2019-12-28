@@ -20,6 +20,10 @@ type CloudBackend interface {
 		cloudProvider provider.CloudProvider,
 		storagePrefix, stateKey string,
 	) error
+
+	// retrieves the storage instance name from the
+	// storage backend configuration
+	GetStorageInstanceName() string
 }
 
 // base cloud backend implementation
