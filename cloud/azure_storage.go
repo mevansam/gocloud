@@ -157,6 +157,7 @@ func (s *azureStorage) getServiceURL() (*azblob.ServiceURL, error) {
 	if result, err = saClient.ListKeys(s.ctx,
 		s.resourceGroupName,
 		s.storageAccountName,
+		storage.Kerb,
 	); err != nil {
 		return nil, err
 	}
@@ -255,7 +256,7 @@ func (s *azureStorage) ListInstances() ([]StorageInstance, error) {
 	if items, err = bcClient.ListComplete(s.ctx,
 		s.resourceGroupName,
 		s.storageAccountName,
-		"", "", "",
+		"", "",
 	); err != nil {
 		return nil, err
 	}
