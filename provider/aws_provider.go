@@ -74,7 +74,7 @@ func (p *awsProvider) createAWSInputForm() error {
 	if _, err = form.NewInputField(forms.FieldAttributes{
 		Name:        "access_key",
 		DisplayName: "Access Key",
-		Description: "The AWS user account's access key id.",
+		Description: "The AWS account's access key id.",
 		InputType:   forms.String,
 		EnvVars: []string{
 			"AWS_ACCESS_KEY_ID",
@@ -86,7 +86,7 @@ func (p *awsProvider) createAWSInputForm() error {
 	if _, err = form.NewInputField(forms.FieldAttributes{
 		Name:        "secret_key",
 		DisplayName: "Secret Key",
-		Description: "The AWS user account's secret key.",
+		Description: "The AWS account's secret key.",
 		InputType:   forms.String,
 		Sensitive:   true,
 		EnvVars: []string{
