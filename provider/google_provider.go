@@ -120,6 +120,7 @@ func (p *googleProvider) createGoogleInputForm() error {
 		GroupID:       1,
 		InputType:     forms.String,
 		ValueFromFile: true,
+		Sensitive:     true,
 		EnvVars: []string{
 			"GOOGLE_CREDENTIALS",
 			"GOOGLE_CLOUD_KEYFILE_JSON",
