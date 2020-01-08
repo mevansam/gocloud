@@ -233,23 +233,26 @@ func (p *googleProvider) Connect() error {
 	if !p.IsValid() {
 		return fmt.Errorf("provider configuration is not valid")
 	}
-	config := p.cloudProvider.
-		config.(*googleProviderConfig)
+	if !p.isInitialized {
 
-	if p.computeService, err = compute.NewService(
-		p.ctx,
-		option.WithCredentialsJSON([]byte(*config.Authentication.Credentials)),
-	); err != nil {
-		return err
-	}
-	if p.storageClient, err = storage.NewClient(
-		p.ctx,
-		option.WithCredentialsJSON([]byte(*config.Authentication.Credentials)),
-	); err != nil {
-		return err
-	}
+		config := p.cloudProvider.
+			config.(*googleProviderConfig)
 
-	p.isInitialized = true
+		if p.computeService, err = compute.NewService(
+			p.ctx,
+			option.WithCredentialsJSON([]byte(*config.Authentication.Credentials)),
+		); err != nil {
+			return err
+		}
+		if p.storageClient, err = storage.NewClient(
+			p.ctx,
+			option.WithCredentialsJSON([]byte(*config.Authentication.Credentials)),
+		); err != nil {
+			return err
+		}
+
+		p.isInitialized = true
+	}
 	return nil
 }
 

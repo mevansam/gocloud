@@ -270,52 +270,55 @@ func (p *azureProvider) Connect() error {
 	if !p.IsValid() {
 		return fmt.Errorf("provider configuration is not valid")
 	}
-	config := p.cloudProvider.
-		config.(*azureProviderConfig)
+	if !p.isInitialized {
 
-	if env, err = azure.EnvironmentFromName(
-		environments[*config.Environment],
-	); err != nil {
-		return err
-	}
-	if oauthConfig, err = adal.NewOAuthConfig(
-		env.ActiveDirectoryEndpoint,
-		*config.TenantID,
-	); err != nil {
-		return err
-	}
-	if token, err = adal.NewServicePrincipalToken(
-		*oauthConfig,
-		*config.ClientID,
-		*config.ClientSecret,
-		env.ResourceManagerEndpoint,
-	); err != nil {
-		return err
-	}
+		config := p.cloudProvider.
+			config.(*azureProviderConfig)
 
-	p.authorizer = autorest.NewBearerAuthorizer(token)
-
-	// ensure default resource group exists
-	client := resources.NewGroupsClient(*config.SubscriptionID)
-	client.Authorizer = p.authorizer
-	client.AddToUserAgent(httpUserAgent)
-
-	if p.defaultResGrp, err = client.Get(p.ctx,
-		*config.DefaultResourceGroup,
-	); err != nil {
-
-		// create default resource group
-		if p.defaultResGrp, err = client.CreateOrUpdate(p.ctx,
-			*config.DefaultResourceGroup,
-			resources.Group{
-				Location: config.DefaultLocation,
-			},
+		if env, err = azure.EnvironmentFromName(
+			environments[*config.Environment],
 		); err != nil {
 			return err
 		}
-	}
+		if oauthConfig, err = adal.NewOAuthConfig(
+			env.ActiveDirectoryEndpoint,
+			*config.TenantID,
+		); err != nil {
+			return err
+		}
+		if token, err = adal.NewServicePrincipalToken(
+			*oauthConfig,
+			*config.ClientID,
+			*config.ClientSecret,
+			env.ResourceManagerEndpoint,
+		); err != nil {
+			return err
+		}
 
-	p.isInitialized = true
+		p.authorizer = autorest.NewBearerAuthorizer(token)
+
+		// ensure default resource group exists
+		client := resources.NewGroupsClient(*config.SubscriptionID)
+		client.Authorizer = p.authorizer
+		client.AddToUserAgent(httpUserAgent)
+
+		if p.defaultResGrp, err = client.Get(p.ctx,
+			*config.DefaultResourceGroup,
+		); err != nil {
+
+			// create default resource group
+			if p.defaultResGrp, err = client.CreateOrUpdate(p.ctx,
+				*config.DefaultResourceGroup,
+				resources.Group{
+					Location: config.DefaultLocation,
+				},
+			); err != nil {
+				return err
+			}
+		}
+
+		p.isInitialized = true
+	}
 	return nil
 }
 

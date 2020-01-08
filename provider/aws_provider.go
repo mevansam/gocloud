@@ -176,24 +176,29 @@ func (p *awsProvider) Connect() error {
 	if !p.IsValid() {
 		return fmt.Errorf("provider configuration is not valid")
 	}
-	config := p.cloudProvider.
-		config.(*awsProviderConfig)
+	if !p.isInitialized {
+		config := p.cloudProvider.
+			config.(*awsProviderConfig)
 
-	token := ""
-	if config.Token != nil {
-		token = *config.Token
+		token := ""
+		if config.Token != nil {
+			token = *config.Token
+		}
+
+		if p.session, err = session.NewSession(&aws.Config{
+			Region: aws.String(*config.Region),
+			Credentials: credentials.NewStaticCredentials(
+				*config.AccessKey,
+				*config.SecretKey,
+				token,
+			),
+		}); err != nil {
+			return err
+		}
+
+		p.isInitialized = true
 	}
-
-	p.session, err = session.NewSession(&aws.Config{
-		Region: aws.String(*config.Region),
-		Credentials: credentials.NewStaticCredentials(
-			*config.AccessKey,
-			*config.SecretKey,
-			token,
-		),
-	})
-	p.isInitialized = true
-	return err
+	return nil
 }
 
 func (p *awsProvider) Region() *string {
