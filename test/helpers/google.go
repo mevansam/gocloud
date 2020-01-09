@@ -150,14 +150,14 @@ func GoogleGetRegions() []string {
 }
 
 // creates google instances for testing
-func GoogleDeployTestInstances(name string, numInstances int) map[string]string {
+func GoogleDeployTestInstances(name string, numInstances int) map[string]*compute.Instance {
 
 	var (
 		err error
 		wg  sync.WaitGroup
 	)
 
-	instanceIPs := make(map[string]string)
+	instances := make(map[string]*compute.Instance)
 
 	ctx := context.Background()
 	computeService, err := compute.NewService(ctx, option.WithCredentialsJSON(googleCredentialsJson))
@@ -239,15 +239,16 @@ func GoogleDeployTestInstances(name string, numInstances int) map[string]string 
 				}
 			}
 
-			instanceIPs[vmName] = instance.NetworkInterfaces[0].AccessConfigs[0].NatIP
 			logger.TraceMessage(
-				"IP address for VM '%s' is '%s'.",
-				vmName, instanceIPs[vmName])
+				"Using instance: ID - %s, name - %s",
+				instance.Id, instance.Name)
+
+			instances[vmName] = instance
 		}(i)
 	}
 	wg.Wait()
 
-	return instanceIPs
+	return instances
 }
 
 func GoogleInstanceState(name string) string {

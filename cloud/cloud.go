@@ -33,6 +33,9 @@ type Compute interface {
 	// Retreives a compute instance.
 	GetInstance(name string) (ComputeInstance, error)
 
+	// Retrieves instances having the given ids
+	GetInstances(ids []string) ([]ComputeInstance, error)
+
 	// Returns a list of all compute instances
 	// within this cloud compute context
 	ListInstances() ([]ComputeInstance, error)

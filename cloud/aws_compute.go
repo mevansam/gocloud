@@ -128,7 +128,39 @@ func (c *awsCompute) GetInstance(name string) (ComputeInstance, error) {
 	)
 }
 
+func (c *awsCompute) GetInstances(ids []string) ([]ComputeInstance, error) {
+
+	numIds := len(ids)
+
+	idFilter := &ec2.Filter{
+		Name:   aws.String("instance-id"),
+		Values: make([]*string, numIds),
+	}
+	for i, id := range ids {
+		idFilter.Values[i] = aws.String(id)
+	}
+
+	filters := make([]*ec2.Filter, 1, 2)
+	filters[0] = idFilter
+
+	return c.listInstances(filters)
+}
+
 func (c *awsCompute) ListInstances() ([]ComputeInstance, error) {
+
+	filters := make([]*ec2.Filter, 0, len(c.props.FilterTags)+1)
+	for t, v := range c.props.FilterTags {
+		filters = append(filters,
+			&ec2.Filter{
+				Name:   aws.String("tag:" + t),
+				Values: []*string{aws.String(v)},
+			},
+		)
+	}
+	return c.listInstances(filters)
+}
+
+func (c *awsCompute) listInstances(filters []*ec2.Filter) ([]ComputeInstance, error) {
 
 	var (
 		err error
@@ -139,8 +171,9 @@ func (c *awsCompute) ListInstances() ([]ComputeInstance, error) {
 	svc := ec2.New(c.session)
 	computeInstances := []ComputeInstance{}
 
-	filters := make([]*ec2.Filter, 1, len(c.props.FilterTags)+1)
-	filters[0] = &ec2.Filter{
+	// ensure terminated instances are
+	// not included in the response
+	filters = append(filters, &ec2.Filter{
 		Name: aws.String("instance-state-name"),
 		Values: []*string{
 			aws.String("pending"),
@@ -149,7 +182,7 @@ func (c *awsCompute) ListInstances() ([]ComputeInstance, error) {
 			aws.String("stopping"),
 			aws.String("stopped"),
 		},
-	}
+	})
 	for t, v := range c.props.FilterTags {
 		filters = append(filters,
 			&ec2.Filter{

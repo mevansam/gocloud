@@ -1,10 +1,13 @@
 package cloud_test
 
 import (
-	"github.com/mevansam/goutils/logger"
+	"strconv"
+
+	compute "google.golang.org/api/compute/v1"
 
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/gocloud/provider"
+	"github.com/mevansam/goutils/logger"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -20,7 +23,7 @@ var _ = Describe("Google Compute Tests", func() {
 		googleProvider provider.CloudProvider
 		googleCompute  cloud.Compute
 
-		testInstances map[string]string
+		testInstances map[string]*compute.Instance
 	)
 
 	BeforeEach(func() {
@@ -60,18 +63,37 @@ var _ = Describe("Google Compute Tests", func() {
 			Expect(len(instances)).To(Equal(len(testInstances)))
 
 			for _, instance := range instances {
-				ipAddress, exists := testInstances[instance.Name()]
+				googleInstance, exists := testInstances[instance.Name()]
 				Expect(exists).To(BeTrue())
-				Expect(instance.PublicIP()).To(Equal(ipAddress))
+				Expect(instance.PublicIP()).To(Equal(googleInstance.NetworkInterfaces[0].AccessConfigs[0].NatIP))
+			}
+		})
+
+		It("retrieves a list of compute instances by their ids", func() {
+
+			instanceIds := []string{}
+			for _, googleInstance := range testInstances {
+				instanceIds = append(instanceIds, strconv.FormatUint(googleInstance.Id, 10))
+			}
+
+			instances, err := googleCompute.GetInstances(instanceIds)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(instances)).To(Equal(len(testInstances)))
+
+			for _, instance := range instances {
+				googleInstance, exists := testInstances[instance.Name()]
+				Expect(exists).To(BeTrue())
+				Expect(instance.ID()).To(Equal(strconv.FormatUint(googleInstance.Id, 10)))
+				Expect(instance.PublicIP()).To(Equal(googleInstance.NetworkInterfaces[0].AccessConfigs[0].NatIP))
 			}
 		})
 
 		It("retrieves a compute instance", func() {
 
-			instance, err := googleCompute.GetInstance("test-X")
+			_, err := googleCompute.GetInstance("test-X")
 			Expect(err).To(HaveOccurred())
 
-			instance, err = googleCompute.GetInstance("test-0")
+			instance, err := googleCompute.GetInstance("test-0")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(instance).ToNot(BeNil())
 		})

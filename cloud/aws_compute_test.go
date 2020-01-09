@@ -1,6 +1,7 @@
 package cloud_test
 
 import (
+	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mevansam/goutils/logger"
 
 	"github.com/mevansam/gocloud/cloud"
@@ -20,7 +21,7 @@ var _ = Describe("AWS Compute Tests", func() {
 		awsProvider provider.CloudProvider
 		awsCompute  cloud.Compute
 
-		testInstances map[string]string
+		testInstances map[string]*ec2.Instance
 	)
 
 	BeforeEach(func() {
@@ -61,18 +62,37 @@ var _ = Describe("AWS Compute Tests", func() {
 			Expect(len(instances)).To(Equal(len(testInstances)))
 
 			for _, instance := range instances {
-				ipAddress, exists := testInstances[instance.Name()]
+				ec2Instance, exists := testInstances[instance.Name()]
 				Expect(exists).To(BeTrue())
-				Expect(instance.PublicIP()).To(Equal(ipAddress))
+				Expect(instance.PublicIP()).To(Equal(*ec2Instance.PublicIpAddress))
+			}
+		})
+
+		It("retrieves a list of compute instances by their ids", func() {
+
+			instanceIds := []string{}
+			for _, ec2Instance := range testInstances {
+				instanceIds = append(instanceIds, *ec2Instance.InstanceId)
+			}
+
+			instances, err := awsCompute.GetInstances(instanceIds)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(instances)).To(Equal(len(testInstances)))
+
+			for _, instance := range instances {
+				ec2Instance, exists := testInstances[instance.Name()]
+				Expect(exists).To(BeTrue())
+				Expect(instance.ID()).To(Equal(*ec2Instance.InstanceId))
+				Expect(instance.PublicIP()).To(Equal(*ec2Instance.PublicIpAddress))
 			}
 		})
 
 		It("retrieves a compute instance", func() {
 
-			instance, err := awsCompute.GetInstance("test-X")
+			_, err := awsCompute.GetInstance("test-X")
 			Expect(err).To(HaveOccurred())
 
-			instance, err = awsCompute.GetInstance("test-0")
+			instance, err := awsCompute.GetInstance("test-0")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(instance).ToNot(BeNil())
 		})

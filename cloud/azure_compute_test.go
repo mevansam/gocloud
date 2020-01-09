@@ -20,7 +20,7 @@ var _ = Describe("Azure Compute Tests", func() {
 		azureProvider provider.CloudProvider
 		azureCompute  cloud.Compute
 
-		testInstances map[string]string
+		testInstances map[string]map[string]string
 	)
 
 	BeforeEach(func() {
@@ -54,18 +54,37 @@ var _ = Describe("Azure Compute Tests", func() {
 			Expect(len(instances)).To(Equal(len(testInstances)))
 
 			for _, instance := range instances {
-				ipAddress, exists := testInstances[instance.Name()]
+				azureInstance, exists := testInstances[instance.Name()]
 				Expect(exists).To(BeTrue())
-				Expect(instance.PublicIP()).To(Equal(ipAddress))
+				Expect(instance.PublicIP()).To(Equal(azureInstance["ipAddress"]))
+			}
+		})
+
+		It("retrieves a list of compute instances by their ids", func() {
+
+			instanceIds := []string{}
+			for _, azureInstance := range testInstances {
+				instanceIds = append(instanceIds, azureInstance["id"])
+			}
+
+			instances, err := azureCompute.GetInstances(instanceIds)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(len(instances)).To(Equal(len(testInstances)))
+
+			for _, instance := range instances {
+				azureInstance, exists := testInstances[instance.Name()]
+				Expect(exists).To(BeTrue())
+				Expect(instance.ID()).To(Equal(azureInstance["id"]))
+				Expect(instance.PublicIP()).To(Equal(azureInstance["ipAddress"]))
 			}
 		})
 
 		It("retrieves a compute instance", func() {
 
-			instance, err := azureCompute.GetInstance("test-X")
+			_, err := azureCompute.GetInstance("test-X")
 			Expect(err).To(HaveOccurred())
 
-			instance, err = azureCompute.GetInstance("test-0")
+			instance, err := azureCompute.GetInstance("test-0")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(instance).ToNot(BeNil())
 		})

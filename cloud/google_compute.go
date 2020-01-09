@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
+	compute "google.golang.org/api/compute/v1"
+
 	"github.com/mevansam/goutils/logger"
 	"github.com/mevansam/goutils/utils"
-	compute "google.golang.org/api/compute/v1"
 )
 
 type GoogleComputeProperties struct {
@@ -176,7 +178,43 @@ func (c *googleCompute) GetInstance(name string) (ComputeInstance, error) {
 	}, nil
 }
 
+func (c *googleCompute) GetInstances(ids []string) ([]ComputeInstance, error) {
+
+	var (
+		filter strings.Builder
+	)
+
+	for i, id := range ids {
+		if i > 0 {
+			filter.WriteString(" OR ")
+		}
+		filter.WriteString(
+			fmt.Sprintf("(id = %s)", id),
+		)
+	}
+	return c.listInstances(filter.String())
+}
+
 func (c *googleCompute) ListInstances() ([]ComputeInstance, error) {
+
+	var (
+		filter strings.Builder
+	)
+
+	i := 0
+	for label, value := range c.props.FilterLabels {
+		if i > 0 {
+			filter.WriteString(" AND ")
+		}
+		filter.WriteString(
+			fmt.Sprintf("(labels.%s = %s)", label, value),
+		)
+		i++
+	}
+	return c.listInstances(filter.String())
+}
+
+func (c *googleCompute) listInstances(filter string) ([]ComputeInstance, error) {
 
 	var (
 		err error
@@ -195,11 +233,7 @@ func (c *googleCompute) ListInstances() ([]ComputeInstance, error) {
 	for _, z := range zones {
 
 		call = c.service.Instances.List(c.projectID, z)
-		for label, value := range c.props.FilterLabels {
-			call.Filter(
-				fmt.Sprintf("labels.%s=%s", label, value),
-			)
-		}
+		call.Filter(filter)
 		if instanceList, err = call.Do(); err != nil {
 			return nil, err
 		}

@@ -192,13 +192,15 @@ func AzureLocations(environment string) map[string]string {
 }
 
 // creates azure instances for testing
-func AzureDeployTestInstances(name string, numInstances int) map[string]string {
+func AzureDeployTestInstances(name string, numInstances int) map[string]map[string]string {
 
 	var (
 		err error
 
-		instanceIPs map[string]string
-		ipAddress   network.PublicIPAddress
+		instances map[string]map[string]string
+
+		vm        compute.VirtualMachine
+		ipAddress network.PublicIPAddress
 
 		future resources.DeploymentsCreateOrUpdateFuture
 	)
@@ -225,7 +227,7 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]string {
 	addressClient.Authorizer = azureAuthorizer("AzurePublicCloud")
 	addressClient.AddToUserAgent("cbs-test")
 
-	instanceIPs = make(map[string]string)
+	instances = make(map[string]map[string]string)
 
 	ctx := context.Background()
 	for i := 0; i < numInstances; i++ {
@@ -233,7 +235,7 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]string {
 		vmName := fmt.Sprintf("%s-%d", name, i)
 		ipName := fmt.Sprintf("cbstestip-%s-%d", name, i)
 
-		if _, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceView); err != nil {
+		if vm, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceView); err != nil {
 			// create test vm if it has not been created
 			logger.TraceMessage("Deploying test VM '%s'.", vmName)
 
@@ -261,6 +263,9 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]string {
 			Expect(err).NotTo(HaveOccurred())
 			err = future.WaitForCompletionRef(ctx, deploymentsClient.BaseClient.Client)
 			Expect(err).NotTo(HaveOccurred())
+
+			vm, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceView)
+			Expect(err).NotTo(HaveOccurred())
 		}
 
 		ipAddress, err = addressClient.Get(ctx,
@@ -269,17 +274,19 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]string {
 			"",
 		)
 		Expect(err).NotTo(HaveOccurred())
-		if ipAddress.PublicIPAddressPropertiesFormat.IPAddress != nil {
-			instanceIPs[vmName] = *ipAddress.PublicIPAddressPropertiesFormat.IPAddress
-		} else {
-			instanceIPs[vmName] = ""
-		}
+
 		logger.TraceMessage(
-			"IP address for VM '%s' is '%s'.",
-			vmName, instanceIPs[vmName])
+			"Using instance: ID - %s, name - %s",
+			*vm.ID, vmName)
+
+		instances[vmName] = make(map[string]string)
+		instances[vmName]["id"] = *vm.ID
+		if ipAddress.PublicIPAddressPropertiesFormat.IPAddress != nil {
+			instances[vmName]["ipAddress"] = *ipAddress.PublicIPAddressPropertiesFormat.IPAddress
+		}
 	}
 
-	return instanceIPs
+	return instances
 }
 
 func AzureInstanceState(name string) string {

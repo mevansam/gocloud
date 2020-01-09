@@ -173,6 +173,33 @@ func (c *azureCompute) GetInstance(name string) (ComputeInstance, error) {
 	return c.newAzureComputeInstance(vm)
 }
 
+func (c *azureCompute) GetInstances(ids []string) ([]ComputeInstance, error) {
+
+	var (
+		err error
+
+		instances         []ComputeInstance
+		filteredInstances []ComputeInstance
+	)
+
+	// get all instances in resource
+	// group and create filtered list
+	if instances, err = c.ListInstances(); err != nil {
+		return nil, err
+	}
+	filteredInstances = make([]ComputeInstance, 0, len(instances))
+
+	for _, instance := range instances {
+		for _, id := range ids {
+			if id == instance.ID() {
+				filteredInstances = append(filteredInstances, instance)
+				break
+			}
+		}
+	}
+	return filteredInstances, nil
+}
+
 func (c *azureCompute) ListInstances() ([]ComputeInstance, error) {
 
 	var (

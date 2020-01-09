@@ -123,15 +123,13 @@ func CleanUpAWSTestData() {
 }
 
 // creates aws instances for testing
-func AWSDeployTestInstances(name string, numInstances int) map[string]string {
+func AWSDeployTestInstances(name string, numInstances int) map[string]*ec2.Instance {
 
 	var (
 		err error
 		wg  sync.WaitGroup
 
 		sess *session.Session
-
-		instanceIPs map[string]string
 	)
 
 	sess, err = session.NewSession(&aws.Config{
@@ -145,7 +143,7 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]string {
 	Expect(err).NotTo(HaveOccurred())
 	svc := ec2.New(sess)
 
-	instanceIPs = make(map[string]string)
+	instances := make(map[string]*ec2.Instance)
 
 	wg.Add(numInstances)
 	for i := 0; i < numInstances; i++ {
@@ -280,12 +278,12 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]string {
 				"Using instance: ID - %s, name - %s",
 				*instance.InstanceId, vmName)
 
-			instanceIPs[vmName] = *instance.PublicIpAddress
+			instances[vmName] = instance
 		}(i)
 	}
 	wg.Wait()
 
-	return instanceIPs
+	return instances
 }
 
 func awsWaitUntilInstanceRunning(svc *ec2.EC2, instanceID *string) *ec2.Instance {
