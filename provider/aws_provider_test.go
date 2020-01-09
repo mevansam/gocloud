@@ -125,9 +125,9 @@ Amazon Web Services Cloud Platform
 
 ` + term.ITALIC + `CONFIGURATION DATA INPUT REFERENCE` + term.NC + `
 
-* Access Key - The AWS user account's access key id. It will be sourced from the
+* Access Key - The AWS account's access key id. It will be sourced from the
                environment variable AWS_ACCESS_KEY_ID if not provided.
-* Secret Key - The AWS user account's secret key. It will be sourced from the
+* Secret Key - The AWS account's secret key. It will be sourced from the
                environment variable AWS_SECRET_ACCESS_KEY if not provided.
 * Token      - AWS multi-factor authentication token. It will be sourced from
                the environment variable AWS_SESSION_TOKEN if not provided.
