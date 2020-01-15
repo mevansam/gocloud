@@ -12,8 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+
 	"github.com/mevansam/goutils/logger"
-	"github.com/mevansam/goutils/utils"
+	"github.com/mevansam/goutils/streams"
 )
 
 type AWSStorageProperties struct {
@@ -354,7 +355,7 @@ func (s *awsStorageInstance) Download(name string, data io.Writer) error {
 		"Downloading object with name '%s' from bucket '%s'.",
 		name, s.name)
 
-	output := utils.NewWriteAtBuffer(data)
+	output := streams.NewWriteAtBuffer(data)
 	if _, err = downloader.Download(output,
 		&s3.GetObjectInput{
 			Bucket: aws.String(s.name),
