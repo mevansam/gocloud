@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
 	"github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
@@ -53,6 +54,7 @@ func NewAzureCompute(
 }
 
 func (c *azureCompute) newAzureComputeInstance(
+	resourceGroupName string,
 	vm compute.VirtualMachine,
 ) (*azureComputeInstance, error) {
 
@@ -70,7 +72,7 @@ func (c *azureCompute) newAzureComputeInstance(
 
 	logger.TraceMessage(
 		"Creating Azure compute instance reference for VM '%s' in resource group '%s'.",
-		*vm.Name, c.resourceGroupName,
+		*vm.Name, resourceGroupName,
 	)
 
 	if vm.NetworkProfile.NetworkInterfaces != nil {
@@ -95,11 +97,11 @@ func (c *azureCompute) newAzureComputeInstance(
 
 		logger.TraceMessage(
 			"Retrieving public IP of primary NIC '%s' of VM '%s' in resource group '%s'.",
-			nicName, *vm.Name, c.resourceGroupName,
+			nicName, *vm.Name, resourceGroupName,
 		)
 
 		if nic, err = nicClient.Get(c.ctx,
-			c.resourceGroupName,
+			resourceGroupName,
 			nicName, ""); err != nil {
 			return nil, err
 		}
@@ -120,7 +122,7 @@ func (c *azureCompute) newAzureComputeInstance(
 		addressClient.AddToUserAgent(httpUserAgent)
 
 		if ipAddress, err = addressClient.Get(c.ctx,
-			c.resourceGroupName,
+			resourceGroupName,
 			ipName,
 			"",
 		); err != nil {
@@ -137,7 +139,7 @@ func (c *azureCompute) newAzureComputeInstance(
 
 		publicIP: publicIP,
 
-		resourceGroupName: c.resourceGroupName,
+		resourceGroupName: resourceGroupName,
 		subscriptionID:    c.subscriptionID,
 
 		ctx:        c.ctx,
@@ -170,30 +172,70 @@ func (c *azureCompute) GetInstance(name string) (ComputeInstance, error) {
 		return nil, err
 	}
 
-	return c.newAzureComputeInstance(vm)
+	return c.newAzureComputeInstance(c.resourceGroupName, vm)
 }
 
 func (c *azureCompute) GetInstances(ids []string) ([]ComputeInstance, error) {
 
 	var (
 		err error
+		ok  bool
+
+		elems, groupIDs   []string
+		resourceGroupName string
 
 		instances         []ComputeInstance
 		filteredInstances []ComputeInstance
 	)
 
-	// get all instances in resource
-	// group and create filtered list
-	if instances, err = c.ListInstances(); err != nil {
-		return nil, err
+	// map of resource groups to ids where resource
+	// group name is extracted from the id path
+	//
+	// * /subscriptions
+	//		/{subscriptionId}
+	//			/resourceGroups
+	//				/{resourceGroupName}
+	//					/providers
+	//						/Microsoft.Compute
+	//							/virtualMachines
+	//									/{vmName}
+	//
+	resourceGroups := make(map[string][]string)
+	for _, id := range ids {
+		elems = strings.Split(id, "/")
+		if len(elems) != 9 {
+			return nil,
+				fmt.Errorf(
+					"invalid id '%s'. it must have 8 elements", id,
+				)
+		}
+		if elems[2] != c.subscriptionID {
+			return nil,
+				fmt.Errorf(
+					"attempt retrieve an instance with subscription different from that configured",
+				)
+		}
+		resourceGroupName = elems[4]
+		if groupIDs, ok = resourceGroups[resourceGroupName]; ok {
+			resourceGroups[resourceGroupName] = append(groupIDs, id)
+		} else {
+			resourceGroups[resourceGroupName] = []string{id}
+		}
 	}
-	filteredInstances = make([]ComputeInstance, 0, len(instances))
 
-	for _, instance := range instances {
-		for _, id := range ids {
-			if id == instance.ID() {
-				filteredInstances = append(filteredInstances, instance)
-				break
+	filteredInstances = make([]ComputeInstance, 0, len(ids))
+	for resourceGroupName, groupIDs = range resourceGroups {
+		// get all instances in resource
+		// group and create filtered list
+		if instances, err = c.listInstances(resourceGroupName); err != nil {
+			return nil, err
+		}
+		for _, instance := range instances {
+			for _, id := range groupIDs {
+				if id == instance.ID() {
+					filteredInstances = append(filteredInstances, instance)
+					break
+				}
 			}
 		}
 	}
@@ -201,6 +243,12 @@ func (c *azureCompute) GetInstances(ids []string) ([]ComputeInstance, error) {
 }
 
 func (c *azureCompute) ListInstances() ([]ComputeInstance, error) {
+	return c.listInstances(c.resourceGroupName)
+}
+
+func (c *azureCompute) listInstances(
+	resourceGroupName string,
+) ([]ComputeInstance, error) {
 
 	var (
 		err error
@@ -215,7 +263,7 @@ func (c *azureCompute) ListInstances() ([]ComputeInstance, error) {
 	vmClient.Authorizer = c.authorizer
 	vmClient.AddToUserAgent(httpUserAgent)
 
-	if items, err = vmClient.ListComplete(c.ctx, c.resourceGroupName); err != nil {
+	if items, err = vmClient.ListComplete(c.ctx, resourceGroupName); err != nil {
 		return nil, err
 	}
 
@@ -223,7 +271,7 @@ func (c *azureCompute) ListInstances() ([]ComputeInstance, error) {
 	for items.NotDone() {
 		value = items.Value()
 
-		if instance, err = c.newAzureComputeInstance(value); err != nil {
+		if instance, err = c.newAzureComputeInstance(resourceGroupName, value); err != nil {
 			return nil, err
 		}
 		instances = append(instances, instance)
