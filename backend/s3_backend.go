@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
@@ -140,7 +141,9 @@ func (b *s3Backend) Configure(
 		return fmt.Errorf("aws provider's region cannot be empty")
 	}
 
-	bucketName := fmt.Sprintf("%s-%s", storagePrefix, *region)
+	bucketName := strings.ToLower(
+		fmt.Sprintf("%s-%s", storagePrefix, *region),
+	)
 
 	config := b.cloudBackend.
 		config.(*s3BackendConfig)

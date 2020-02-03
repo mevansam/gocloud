@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
@@ -141,7 +142,9 @@ func (b *gcsBackend) Configure(
 		return fmt.Errorf("google provider's region cannot be empty")
 	}
 
-	bucketName := fmt.Sprintf("%s-%s", storagePrefix, *region)
+	bucketName := strings.ToLower(
+		fmt.Sprintf("%s-%s", storagePrefix, *region),
+	)
 
 	config := b.cloudBackend.
 		config.(*gcsBackendConfig)

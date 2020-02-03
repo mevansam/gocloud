@@ -2,6 +2,7 @@ package backend
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
@@ -175,7 +176,9 @@ func (b *azurermBackend) Configure(
 	}
 
 	storageAccountName := provider.GetAzureStorageAccountName(cloudProvider)
-	containerName := fmt.Sprintf("%s-%s", storagePrefix, *defaultLocation)
+	containerName := strings.ToLower(
+		fmt.Sprintf("%s-%s", storagePrefix, *defaultLocation),
+	)
 
 	config := b.cloudBackend.
 		config.(*azurermBackendConfig)
