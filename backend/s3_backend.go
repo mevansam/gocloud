@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/mevansam/gocloud/provider"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
@@ -65,6 +66,9 @@ func (b *s3Backend) createS3InputForm() error {
 		Description: "The S3 bucket to store state in.",
 		InputType:   forms.String,
 		Tags:        []string{"backend", "target-undeployed"},
+
+		InclusionFilter:             "^[-0-9a-zA-Z]{3,63}$",
+		InclusionFilterErrorMessage: "The name prefix must be between 3 and 63 characters long and can only contain letters, numbers and dashes.",
 	}); err != nil {
 		return err
 	}
@@ -141,8 +145,9 @@ func (b *s3Backend) Configure(
 		return fmt.Errorf("aws provider's region cannot be empty")
 	}
 
+	uid := strings.ReplaceAll(uuid.New().String(), "-", "")
 	bucketName := strings.ToLower(
-		fmt.Sprintf("%s-%s", storagePrefix, *region),
+		fmt.Sprintf("%s-%s-%s", storagePrefix, *region, uid),
 	)
 
 	config := b.cloudBackend.
