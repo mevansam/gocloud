@@ -43,8 +43,8 @@ func (f *FakeCloudProvider) GetRegions() []provider.RegionInfo {
 func (f *FakeCloudProvider) GetCompute() (cloud.Compute, error) {
 
 	testInstance := FakeComputeInstance{
-		id: "mycs-test-instance-id",
-		name: "mycs-test-instance-name",
+		id: "bastion-instance-id",
+		name: "bastion",
 	}
 
 	return &FakeCompute{
