@@ -20,5 +20,6 @@ require (
 	github.com/mevansam/goutils v0.0.0-00010101000000-000000000000
 	github.com/onsi/ginkgo v1.11.0
 	github.com/onsi/gomega v1.8.1
+	github.com/pkg/errors v0.9.1 // indirect
 	google.golang.org/api v0.15.0
 )
