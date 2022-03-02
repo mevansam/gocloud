@@ -77,7 +77,7 @@ func testConfigReferenceOutput(cloudBackend backend.CloudBackend, expected strin
 
 		// close piped output
 		os.Stdout.Close()
-		io.Copy(&output, stdOutReader)
+		_, _ = io.Copy(&output, stdOutReader)
 	}()
 
 	// wait until signal is received

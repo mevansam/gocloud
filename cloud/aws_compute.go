@@ -110,7 +110,7 @@ func (c *awsCompute) GetInstance(name string) (ComputeInstance, error) {
 	if describeResult.Reservations != nil && len(describeResult.Reservations) == 1 {
 
 		instances := (*describeResult.Reservations[0]).Instances
-		if instances != nil && len(instances) == 1 {
+		if len(instances) == 1 {
 
 			return c.newAWSComputeInstance(
 				c.session,

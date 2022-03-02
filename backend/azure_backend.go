@@ -137,7 +137,6 @@ func (b *azurermBackend) IsValid() bool {
 		config.StorageAccountName != nil && len(*config.StorageAccountName) > 0 &&
 		config.ContainerName != nil && len(*config.ContainerName) > 0 &&
 		config.Key != nil && len(*config.Key) > 0
-	return false
 }
 
 // interface: backend/CloudBackend functions

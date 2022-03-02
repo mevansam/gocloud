@@ -42,7 +42,7 @@ var _ = Describe("Azure Compute Tests", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(testInstances)).To(Equal(2))
 
-		logger.TraceMessage("Test VMs: %# v", testInstances)
+		logger.DebugMessage("Test VMs: %# v", testInstances)
 	})
 
 	Context("Compute resources", func() {

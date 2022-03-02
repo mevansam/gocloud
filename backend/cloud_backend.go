@@ -127,10 +127,6 @@ func (b *cloudBackend) GetProviderType() string {
 	return b.providerType
 }
 
-func (b *cloudBackend) getConfig() interface{} {
-	return b.config
-}
-
 // interface: encoding/json/Unmarshaler
 
 func (b *cloudBackend) UnmarshalJSON(data []byte) error {

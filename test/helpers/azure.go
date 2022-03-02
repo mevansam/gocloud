@@ -151,7 +151,7 @@ func azureAuthorizer(environment string) *autorest.BearerAuthorizer {
 func AzureGroupsClient(environment string) resources.GroupsClient {
 	client := resources.NewGroupsClient(azureSubscriptionID)
 	client.Authorizer = azureAuthorizer("AzurePublicCloud")
-	client.AddToUserAgent("cbs-test")
+	_ = client.AddToUserAgent("cbs-test")
 	return client
 }
 
@@ -173,9 +173,9 @@ func AzureLocations(environment string) map[string]string {
 
 		client = subscriptions.NewClient()
 		client.Authorizer = azureAuthorizer(environment)
-		client.AddToUserAgent("cbs-test")
+		_ = client.AddToUserAgent("cbs-test")
 
-		result, err = client.ListLocations(context.Background(), azureSubscriptionID)
+		result, err = client.ListLocations(context.Background(), azureSubscriptionID, nil)
 		if err != nil {
 			Fail(err.Error())
 		}
@@ -183,8 +183,10 @@ func AzureLocations(environment string) map[string]string {
 		logger.TraceMessage("\nAzure locations retrieved from API call:")
 		locationMap = make(map[string]string)
 		for _, l := range *result.Value {
-			logger.TraceMessage("  * %s - %s", *l.Name, *l.DisplayName)
-			locationMap[*l.Name] = *l.DisplayName
+			if (!strings.HasSuffix(*l.Name, "stage")) {
+				logger.TraceMessage("  * %s - %s", *l.Name, *l.DisplayName)
+				locationMap[*l.Name] = *l.DisplayName	
+			}
 		}
 		azureEnvLocMap[environment] = locationMap
 	}
@@ -217,15 +219,15 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]map[stri
 
 	vmClient := compute.NewVirtualMachinesClient(azureSubscriptionID)
 	vmClient.Authorizer = azureAuthorizer("AzurePublicCloud")
-	vmClient.AddToUserAgent("cbs-test")
+	_ = vmClient.AddToUserAgent("cbs-test")
 
 	deploymentsClient := resources.NewDeploymentsClient(azureSubscriptionID)
 	deploymentsClient.Authorizer = azureAuthorizer("AzurePublicCloud")
-	deploymentsClient.AddToUserAgent("cbs-test")
+	_ = deploymentsClient.AddToUserAgent("cbs-test")
 
 	addressClient := network.NewPublicIPAddressesClient(azureSubscriptionID)
 	addressClient.Authorizer = azureAuthorizer("AzurePublicCloud")
-	addressClient.AddToUserAgent("cbs-test")
+	_ = addressClient.AddToUserAgent("cbs-test")
 
 	instances = make(map[string]map[string]string)
 
@@ -235,7 +237,7 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]map[stri
 		vmName := fmt.Sprintf("%s-%d", name, i)
 		ipName := fmt.Sprintf("cbstestip-%s-%d", name, i)
 
-		if vm, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceView); err != nil {
+		if vm, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceViewTypesInstanceView); err != nil {
 			// create test vm if it has not been created
 			logger.TraceMessage("Deploying test VM '%s'.", vmName)
 
@@ -256,7 +258,7 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]map[stri
 								"value": ipName,
 							},
 						},
-						Mode: resources.Incremental,
+						Mode: resources.DeploymentModeIncremental,
 					},
 				},
 			)
@@ -264,7 +266,7 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]map[stri
 			err = future.WaitForCompletionRef(ctx, deploymentsClient.BaseClient.Client)
 			Expect(err).NotTo(HaveOccurred())
 
-			vm, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceView)
+			vm, err = vmClient.Get(ctx, azureDefaultResourceGroup, vmName, compute.InstanceViewTypesInstanceView)
 			Expect(err).NotTo(HaveOccurred())
 		}
 
@@ -299,7 +301,7 @@ func AzureInstanceState(name string) string {
 
 	vmClient := compute.NewVirtualMachinesClient(azureSubscriptionID)
 	vmClient.Authorizer = azureAuthorizer("AzurePublicCloud")
-	vmClient.AddToUserAgent("cbs-test")
+	_ = vmClient.AddToUserAgent("cbs-test")
 
 	instanceView, err = vmClient.InstanceView(context.Background(),
 		azureDefaultResourceGroup,
@@ -322,27 +324,31 @@ func AzureStorageAccountExists(name, resourceGroup string) (bool, error) {
 	var (
 		err error
 
-		storageAccts storage.AccountListResult
+		storageAccts storage.AccountListResultIterator
 		exists       bool
 	)
+
+	ctx := context.Background()
 
 	// check if default storage account exists
 	saClient := storage.NewAccountsClient(azureSubscriptionID)
 	saClient.Authorizer = azureAuthorizer("AzurePublicCloud")
-	saClient.AddToUserAgent("cbs-test")
+	_ = saClient.AddToUserAgent("cbs-test")
 
-	if storageAccts, err = saClient.ListByResourceGroup(
-		context.Background(),
-		resourceGroup,
+	if storageAccts, err = saClient.ListByResourceGroupComplete(
+		ctx, resourceGroup,
 	); err != nil {
 		return false, err
 	}
 
 	exists = false
-	for _, acct := range *storageAccts.Value {
-		if *acct.Name == name {
+	for ; storageAccts.NotDone(); {
+		if *storageAccts.Value().Name == name {
 			exists = true
 			break
+		}
+		if err = storageAccts.NextWithContext(ctx); err != nil {
+			return false, err
 		}
 	}
 	if !exists {

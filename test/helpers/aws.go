@@ -87,11 +87,11 @@ func CleanUpAWSTestData() {
 
 		instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 			Filters: []*ec2.Filter{
-				&ec2.Filter{
+				{
 					Name:   aws.String("tag:Role"),
 					Values: []*string{aws.String("Cloudbuilder-Test")},
 				},
-				&ec2.Filter{
+				{
 					Name: aws.String("instance-state-name"),
 					Values: []*string{
 						aws.String("pending"),
@@ -162,11 +162,11 @@ func AWSDeployTestInstances(name string, numInstances int) map[string]*ec2.Insta
 
 			instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 				Filters: []*ec2.Filter{
-					&ec2.Filter{
+					{
 						Name:   aws.String("tag:Name"),
 						Values: []*string{aws.String(vmName)},
 					},
-					&ec2.Filter{
+					{
 						Name: aws.String("instance-state-name"),
 						Values: []*string{
 							aws.String("pending"),
@@ -296,7 +296,7 @@ func awsWaitUntilInstanceRunning(svc *ec2.EC2, instanceID *string) *ec2.Instance
 
 	err = svc.WaitUntilInstanceRunning(&ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
-			&ec2.Filter{
+			{
 				Name:   aws.String("instance-id"),
 				Values: []*string{instanceID},
 			},
@@ -306,7 +306,7 @@ func awsWaitUntilInstanceRunning(svc *ec2.EC2, instanceID *string) *ec2.Instance
 
 	instancesResult, err = svc.DescribeInstances(&ec2.DescribeInstancesInput{
 		Filters: []*ec2.Filter{
-			&ec2.Filter{
+			{
 				Name:   aws.String("instance-id"),
 				Values: []*string{instanceID},
 			},

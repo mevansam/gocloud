@@ -100,7 +100,8 @@ func (c *googleComputeInstance) waitForState(state, etag string) error {
 	go func() {
 		defer wg.Done()
 
-		instance := c.instance
+		var instance *compute.Instance
+		
 		for {
 			if instance, err = c.service.Instances.Get(
 				c.projectID,

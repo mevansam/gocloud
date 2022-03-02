@@ -300,7 +300,7 @@ func (p *azureProvider) Connect() error {
 		// ensure default resource group exists
 		client := resources.NewGroupsClient(*config.SubscriptionID)
 		client.Authorizer = p.authorizer
-		client.AddToUserAgent(httpUserAgent)
+		_ = client.AddToUserAgent(httpUserAgent)
 
 		if p.defaultResGrp, err = client.Get(p.ctx,
 			*config.DefaultResourceGroup,
@@ -345,16 +345,18 @@ func (p *azureProvider) GetRegions() []RegionInfo {
 
 		client := subscriptions.NewClient()
 		client.Authorizer = p.authorizer
-		client.AddToUserAgent(httpUserAgent)
+		_ = client.AddToUserAgent(httpUserAgent)
 
 		config := p.cloudProvider.
 			config.(*azureProviderConfig)
 
-		result, err = client.ListLocations(p.ctx, *config.SubscriptionID)
+		result, err = client.ListLocations(p.ctx, *config.SubscriptionID, nil)
 		if err == nil {
 			regionInfoList = []RegionInfo{}
 			for _, l := range *result.Value {
-				regionInfoList = append(regionInfoList, RegionInfo{*l.Name, *l.DisplayName})
+				if (!strings.HasSuffix(*l.Name, "stage")) {
+					regionInfoList = append(regionInfoList, RegionInfo{*l.Name, *l.DisplayName})
+				}
 			}
 			sortRegions(regionInfoList)
 			logger.TraceMessage("Azure location list retrieved via API: %# v", regionInfoList)
@@ -372,46 +374,72 @@ func (p *azureProvider) GetRegions() []RegionInfo {
 	// list changes.
 
 	regionInfoList = []RegionInfo{
-		RegionInfo{"eastasia", "East Asia"},
-		RegionInfo{"southeastasia", "Southeast Asia"},
-		RegionInfo{"centralus", "Central US"},
-		RegionInfo{"eastus", "East US"},
-		RegionInfo{"eastus2", "East US 2"},
-		RegionInfo{"westus", "West US"},
-		RegionInfo{"northcentralus", "North Central US"},
-		RegionInfo{"southcentralus", "South Central US"},
-		RegionInfo{"northeurope", "North Europe"},
-		RegionInfo{"westeurope", "West Europe"},
-		RegionInfo{"japanwest", "Japan West"},
-		RegionInfo{"japaneast", "Japan East"},
-		RegionInfo{"brazilsouth", "Brazil South"},
-		RegionInfo{"australiaeast", "Australia East"},
-		RegionInfo{"australiasoutheast", "Australia Southeast"},
-		RegionInfo{"southindia", "South India"},
-		RegionInfo{"centralindia", "Central India"},
-		RegionInfo{"westindia", "West India"},
-		RegionInfo{"canadacentral", "Canada Central"},
-		RegionInfo{"canadaeast", "Canada East"},
-		RegionInfo{"uksouth", "UK South"},
-		RegionInfo{"ukwest", "UK West"},
-		RegionInfo{"westcentralus", "West Central US"},
-		RegionInfo{"westus2", "West US 2"},
-		RegionInfo{"koreacentral", "Korea Central"},
-		RegionInfo{"koreasouth", "Korea South"},
-		RegionInfo{"francecentral", "France Central"},
-		RegionInfo{"francesouth", "France South"},
-		RegionInfo{"australiacentral", "Australia Central"},
-		RegionInfo{"australiacentral2", "Australia Central 2"},
-		RegionInfo{"uaecentral", "UAE Central"},
-		RegionInfo{"uaenorth", "UAE North"},
-		RegionInfo{"southafricanorth", "South Africa North"},
-		RegionInfo{"southafricawest", "South Africa West"},
-		RegionInfo{"switzerlandnorth", "Switzerland North"},
-		RegionInfo{"switzerlandwest", "Switzerland West"},
-		RegionInfo{"germanynorth", "Germany North"},
-		RegionInfo{"germanywestcentral", "Germany West Central"},
-		RegionInfo{"norwaywest", "Norway West"},
-		RegionInfo{"norwayeast", "Norway East"},
+		{"global", "Global"},
+		{"unitedstates", "United States"},
+		{"unitedstateseuap", "United States EUAP"},
+		{"westus", "West US"},
+		{"westus2", "West US 2"},
+		{"westus3", "West US 3"},
+		{"westcentralus", "West Central US"},
+		{"northcentralus", "North Central US"},
+		{"centralus", "Central US"},
+		{"centraluseuap", "Central US EUAP"},
+		{"eastus", "East US"},
+		{"eastus2", "East US 2"},
+		{"eastus2euap", "East US 2 EUAP"},
+		{"canada", "Canada"},
+		{"canadacentral", "Canada Central"},
+		{"canadaeast", "Canada East"},
+		{"brazil", "Brazil"},
+		{"brazilsouth", "Brazil South"},
+		{"brazilsoutheast", "Brazil Southeast"},
+		{"europe", "Europe"},
+		{"westeurope", "West Europe"},
+		{"uk", "United Kingdom"},
+		{"uksouth", "UK South"},
+		{"ukwest", "UK West"},
+		{"france", "France"},
+		{"francecentral", "France Central"},
+		{"francesouth", "France South"},
+		{"germany", "Germany"},
+		{"germanynorth", "Germany North"},
+		{"germanywestcentral", "Germany West Central"},
+		{"northeurope", "North Europe"},
+		{"norway", "Norway"},
+		{"norwayeast", "Norway East"},
+		{"norwaywest", "Norway West"},
+		{"southafrica", "South Africa"},
+		{"southafricanorth", "South Africa North"},
+		{"southafricawest", "South Africa West"},
+		{"southcentralus", "South Central US"},
+		{"southeastasia", "Southeast Asia"},
+		{"swedencentral", "Sweden Central"},
+		{"switzerland", "Switzerland"},
+		{"switzerlandnorth", "Switzerland North"},
+		{"switzerlandwest", "Switzerland West"},
+		{"uae", "United Arab Emirates"},
+		{"uaecentral", "UAE Central"},
+		{"uaenorth", "UAE North"},
+		{"asia", "Asia"},
+		{"india", "India"},
+		{"westindia", "West India"},
+		{"centralindia", "Central India"},
+		{"southindia", "South India"},
+		{"jioindiawest", "Jio India West"},
+		{"jioindiacentral", "Jio India Central"},
+		{"korea", "Korea"},
+		{"koreacentral", "Korea Central"},
+		{"koreasouth", "Korea South"},
+		{"japan", "Japan"},
+		{"japaneast", "Japan East"},
+		{"japanwest", "Japan West"},
+		{"asiapacific", "Asia Pacific"},
+		{"eastasia", "East Asia"},
+		{"australia", "Australia"},
+		{"australiacentral", "Australia Central"},
+		{"australiacentral2", "Australia Central 2"},
+		{"australiaeast", "Australia East"},
+		{"australiasoutheast", "Australia Southeast"},
 	}
 	sortRegions(regionInfoList)
 	logger.TraceMessage("Pre-defined Azure location list: %# v", regionInfoList)

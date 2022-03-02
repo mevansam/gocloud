@@ -81,7 +81,7 @@ var _ = Describe("S3 Backend Tests", func() {
 
 			value, err = inputForm.GetFieldValue("bucket")
 			Expect(err).NotTo(HaveOccurred())
-			Expect(*value).To(Equal("mybackend-us-east-1"))
+			Expect(*value).To(MatchRegexp(`^mybackend-us-east-1-[0-9a-f]{32}$`))
 
 			value, err = inputForm.GetFieldValue("key")
 			Expect(err).NotTo(HaveOccurred())

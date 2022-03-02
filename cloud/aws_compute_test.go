@@ -44,7 +44,7 @@ var _ = Describe("AWS Compute Tests", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(testInstances)).To(Equal(2))
 
-		logger.TraceMessage("Test VMs: %# v", testInstances)
+		logger.DebugMessage("Test VMs: %# v", testInstances)
 
 		awsCompute.SetProperties(cloud.AWSComputeProperties{
 			FilterTags: map[string]string{

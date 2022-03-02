@@ -45,7 +45,7 @@ var _ = Describe("Google Compute Tests", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(len(testInstances)).To(Equal(2))
 
-		logger.TraceMessage("Test VMs: %# v", testInstances)
+		logger.DebugMessage("Test VMs: %# v", testInstances)
 
 		googleCompute.SetProperties(cloud.GoogleComputeProperties{
 			FilterLabels: map[string]string{

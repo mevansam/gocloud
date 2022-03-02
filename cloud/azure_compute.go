@@ -93,7 +93,7 @@ func (c *azureCompute) newAzureComputeInstance(
 	if len(nicName) > 0 {
 		nicClient := network.NewInterfacesClient(c.subscriptionID)
 		nicClient.Authorizer = c.authorizer
-		nicClient.AddToUserAgent(httpUserAgent)
+		_ = nicClient.AddToUserAgent(httpUserAgent)
 
 		logger.TraceMessage(
 			"Retrieving public IP of primary NIC '%s' of VM '%s' in resource group '%s'.",
@@ -119,7 +119,7 @@ func (c *azureCompute) newAzureComputeInstance(
 
 		addressClient := network.NewPublicIPAddressesClient(c.subscriptionID)
 		addressClient.Authorizer = c.authorizer
-		addressClient.AddToUserAgent(httpUserAgent)
+		_ = addressClient.AddToUserAgent(httpUserAgent)
 
 		if ipAddress, err = addressClient.Get(c.ctx,
 			resourceGroupName,
@@ -162,12 +162,12 @@ func (c *azureCompute) GetInstance(name string) (ComputeInstance, error) {
 
 	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
 	vmClient.Authorizer = c.authorizer
-	vmClient.AddToUserAgent(httpUserAgent)
+	_ = vmClient.AddToUserAgent(httpUserAgent)
 
 	if vm, err = vmClient.Get(c.ctx,
 		c.resourceGroupName,
 		name,
-		compute.InstanceView,
+		compute.InstanceViewTypesInstanceView,
 	); err != nil {
 		return nil, err
 	}
@@ -261,9 +261,9 @@ func (c *azureCompute) listInstances(
 
 	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
 	vmClient.Authorizer = c.authorizer
-	vmClient.AddToUserAgent(httpUserAgent)
+	_ = vmClient.AddToUserAgent(httpUserAgent)
 
-	if items, err = vmClient.ListComplete(c.ctx, resourceGroupName); err != nil {
+	if items, err = vmClient.ListComplete(c.ctx, resourceGroupName, ""); err != nil {
 		return nil, err
 	}
 
@@ -308,7 +308,7 @@ func (c *azureComputeInstance) State() (InstanceState, error) {
 
 	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
 	vmClient.Authorizer = c.authorizer
-	vmClient.AddToUserAgent(httpUserAgent)
+	_ = vmClient.AddToUserAgent(httpUserAgent)
 
 	if instanceView, err = vmClient.InstanceView(c.ctx,
 		c.resourceGroupName,
@@ -348,7 +348,7 @@ func (c *azureComputeInstance) Start() error {
 
 	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
 	vmClient.Authorizer = c.authorizer
-	vmClient.AddToUserAgent(httpUserAgent)
+	_ = vmClient.AddToUserAgent(httpUserAgent)
 
 	logger.TraceMessage("Starting azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
@@ -373,7 +373,7 @@ func (c *azureComputeInstance) Restart() error {
 
 	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
 	vmClient.Authorizer = c.authorizer
-	vmClient.AddToUserAgent(httpUserAgent)
+	_ = vmClient.AddToUserAgent(httpUserAgent)
 
 	logger.TraceMessage("Restarting azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
@@ -399,7 +399,7 @@ func (c *azureComputeInstance) Stop() error {
 
 	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
 	vmClient.Authorizer = c.authorizer
-	vmClient.AddToUserAgent(httpUserAgent)
+	_ = vmClient.AddToUserAgent(httpUserAgent)
 
 	logger.TraceMessage("Powering off azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
@@ -421,6 +421,7 @@ func (c *azureComputeInstance) Stop() error {
 	if deallocFuture, err = vmClient.Deallocate(c.ctx,
 		c.resourceGroupName,
 		c.name,
+		nil,
 	); err != nil {
 		return err
 	}

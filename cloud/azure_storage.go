@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"net/url"
@@ -27,7 +28,7 @@ type AzureStorageProperties struct {
 	AppendBlockSize int
 	// size of block when uploading
 	// blocks to a blob concurrently
-	PutBlockSize int
+	PutBlockSize int64
 }
 
 type azureStorage struct {
@@ -61,7 +62,7 @@ func NewAzureStorage(
 	var (
 		err error
 
-		storageAccts     storage.AccountListResult
+		storageAccts     storage.AccountListResultIterator
 		nameAvailable    storage.CheckNameAvailabilityResult
 		acctCreateFuture storage.AccountsCreateFuture
 
@@ -70,24 +71,27 @@ func NewAzureStorage(
 
 	saClient := storage.NewAccountsClient(subscriptionID)
 	saClient.Authorizer = authorizer
-	saClient.AddToUserAgent(httpUserAgent)
+	_ = saClient.AddToUserAgent(httpUserAgent)
 
-	if storageAccts, err = saClient.ListByResourceGroup(ctx,
+	if storageAccts, err = saClient.ListByResourceGroupComplete(ctx,
 		resourceGroupName,
 	); err != nil {
 		return nil, err
 	}
 	logger.TraceMessage(
-		"Searching for storage account '%s' in list of accounts for resource group '%s': %# v",
-		storageAccountName, resourceGroupName, *storageAccts.Value)
+		"Searching for storage account '%s' in list of accounts for resource group '%s'.",
+		storageAccountName, resourceGroupName)
 
 	// ensure default storage account exists
 	// for requested storage blob container
 	exists = false
-	for _, acct := range *storageAccts.Value {
-		if *acct.Name == storageAccountName {
+	for storageAccts.NotDone() {
+		if *storageAccts.Value().Name == storageAccountName {
 			exists = true
 			break
+		}
+		if err = storageAccts.NextWithContext(ctx); err != nil {
+			return nil, err
 		}
 	}
 	if !exists {
@@ -102,7 +106,7 @@ func NewAzureStorage(
 		); err != nil {
 			return nil, err
 		}
-		if *nameAvailable.NameAvailable != true {
+		if !*nameAvailable.NameAvailable {
 			return nil, fmt.Errorf("storage account name '%s' not available", storageAccountName)
 		}
 
@@ -111,8 +115,9 @@ func NewAzureStorage(
 			storageAccountName,
 			storage.AccountCreateParameters{
 				Sku: &storage.Sku{
-					Name: storage.StandardLRS,
+					Name: storage.SkuNameStandardLRS,
 				},
+				Kind:                              storage.KindStorageV2,
 				Location:                          &locationName,
 				AccountPropertiesCreateParameters: &storage.AccountPropertiesCreateParameters{},
 			},
@@ -152,12 +157,12 @@ func (s *azureStorage) getServiceURL() (*azblob.ServiceURL, error) {
 
 	saClient := storage.NewAccountsClient(s.subscriptionID)
 	saClient.Authorizer = s.authorizer
-	saClient.AddToUserAgent(httpUserAgent)
+	_ = saClient.AddToUserAgent(httpUserAgent)
 
 	if result, err = saClient.ListKeys(s.ctx,
 		s.resourceGroupName,
 		s.storageAccountName,
-		storage.Kerb,
+		storage.ListKeyExpandKerb,
 	); err != nil {
 		return nil, err
 	}
@@ -206,7 +211,7 @@ func (s *azureStorage) NewInstance(name string) (StorageInstance, error) {
 
 	bcClient := storage.NewBlobContainersClient(s.subscriptionID)
 	bcClient.Authorizer = s.authorizer
-	bcClient.AddToUserAgent(httpUserAgent)
+	_ = bcClient.AddToUserAgent(httpUserAgent)
 
 	// ensure storage blob container exists
 	if _, err = bcClient.Get(s.ctx,
@@ -251,12 +256,12 @@ func (s *azureStorage) ListInstances() ([]StorageInstance, error) {
 
 	bcClient := storage.NewBlobContainersClient(s.subscriptionID)
 	bcClient.Authorizer = s.authorizer
-	bcClient.AddToUserAgent(httpUserAgent)
+	_ = bcClient.AddToUserAgent(httpUserAgent)
 
 	if items, err = bcClient.ListComplete(s.ctx,
 		s.resourceGroupName,
 		s.storageAccountName,
-		"", "",
+		"", "", "",
 	); err != nil {
 		return nil, err
 	}
@@ -273,7 +278,9 @@ func (s *azureStorage) ListInstances() ([]StorageInstance, error) {
 				serviceURL.NewContainerURL(*value.Name),
 			),
 		)
-		items.NextWithContext(s.ctx)
+		if err = items.NextWithContext(s.ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	return instances, nil
@@ -385,6 +392,8 @@ func (s *azureStorageInstance) Upload(name, contentType string, data io.Reader, 
 		},
 		azblob.Metadata{},
 		azblob.BlobAccessConditions{},
+		azblob.BlobTagsMap{},
+		azblob.ClientProvidedKeyOptions{},
 	); err != nil {
 		return err
 	}
@@ -407,7 +416,9 @@ func (s *azureStorageInstance) Upload(name, contentType string, data io.Reader, 
 			if _, err = blobURL.AppendBlock(s.ctx,
 				bytes.NewReader(b[0:n]),
 				azblob.AppendBlobAccessConditions{},
-				nil); err != nil {
+				nil,
+				azblob.ClientProvidedKeyOptions{},
+			); err != nil {
 				return err
 			}
 		}
@@ -426,6 +437,8 @@ func (s *azureStorageInstance) UploadFile(name, contentType, path string) error 
 		wg sync.WaitGroup
 
 		blockList *azblob.BlockList
+
+		i int64
 	)
 
 	if file, err = os.Open(path); err != nil {
@@ -443,10 +456,10 @@ func (s *azureStorageInstance) UploadFile(name, contentType, path string) error 
 		"Uploading file blob with name '%s' of size %d to container '%s'.",
 		name, size, s.name)
 
-	if int(size) > s.props.PutBlockSize {
+	if size > s.props.PutBlockSize {
 
-		numBlocks := int(size / int64(s.props.PutBlockSize))
-		partialBlockSize := int(size % int64(s.props.PutBlockSize))
+		numBlocks := size / s.props.PutBlockSize
+		partialBlockSize := size % s.props.PutBlockSize
 		if partialBlockSize > 0 {
 			numBlocks++
 		}
@@ -454,27 +467,29 @@ func (s *azureStorageInstance) UploadFile(name, contentType, path string) error 
 		hasErrors := false
 		errors := make([]error, numBlocks)
 
-		wg.Add(numBlocks)
-		for i := 0; i < numBlocks; i++ {
+		wg.Add(int(numBlocks))
+		for i = 0; i < numBlocks; i++ {
 
-			go func(blockNum int) {
+			go func(blockNum int64) {
 				defer wg.Done()
 
 				logger.TraceMessage(
 					"Putting block %d of blob to blob with name '%s' in container '%s'.",
 					blockNum, name, s.name)
 
+				blockID := make([]byte, 8)
+				binary.LittleEndian.PutUint64(blockID, uint64(blockNum))
+
 				if _, err = blobURL.StageBlock(s.ctx,
-					base64.StdEncoding.EncodeToString(
-						[]byte(string(blockNum)),
-					),
+					base64.StdEncoding.EncodeToString(blockID),
 					utils.NewChunkReadSeeker(
 						file,
-						int64(blockNum*s.props.PutBlockSize),
-						int64(s.props.PutBlockSize),
+						blockNum * s.props.PutBlockSize,
+						s.props.PutBlockSize,
 					),
 					azblob.LeaseAccessConditions{},
 					nil,
+					azblob.ClientProvidedKeyOptions{},
 				); err != nil {
 					hasErrors = true
 					errors[blockNum] = err
@@ -485,7 +500,7 @@ func (s *azureStorageInstance) UploadFile(name, contentType, path string) error 
 
 		if hasErrors {
 			var errMsg strings.Builder
-			for i := 0; i < numBlocks; i++ {
+			for i = 0; i < numBlocks; i++ {
 				if errors[i] != nil {
 					errMsg.WriteString(
 						fmt.Sprintf("Uploading block %d failed: %s; ", i, errors[i].Error()),
@@ -516,6 +531,9 @@ func (s *azureStorageInstance) UploadFile(name, contentType, path string) error 
 			},
 			azblob.Metadata{},
 			azblob.BlobAccessConditions{},
+			azblob.AccessTierHot,
+			azblob.BlobTagsMap{},
+			azblob.ClientProvidedKeyOptions{},
 		)
 
 	} else {
@@ -523,14 +541,16 @@ func (s *azureStorageInstance) UploadFile(name, contentType, path string) error 
 			"Creating block blob of size %d to blob with name '%s' in container '%s'.",
 			size, name, s.name)
 
-		_, err = blobURL.Upload(
-			s.ctx,
+		_, err = blobURL.Upload(s.ctx,
 			file,
 			azblob.BlobHTTPHeaders{
 				ContentType: contentType,
 			},
 			azblob.Metadata{},
 			azblob.BlobAccessConditions{},
+			azblob.AccessTierHot,
+			azblob.BlobTagsMap{},
+			azblob.ClientProvidedKeyOptions{},
 		)
 	}
 
@@ -554,6 +574,7 @@ func (s *azureStorageInstance) Download(name string, data io.Writer) error {
 		0, azblob.CountToEnd,
 		azblob.BlobAccessConditions{},
 		false,
+		azblob.ClientProvidedKeyOptions{},
 	); err != nil {
 		return err
 	}
@@ -613,6 +634,8 @@ func (s *azureStorageInstance) DownloadAsync(name string, data io.WriterAt) (*sy
 		wg  sync.WaitGroup
 
 		blobListResponse *azblob.ListBlobsFlatSegmentResponse
+
+		i int64
 	)
 
 	// get size of blob to download
@@ -641,8 +664,8 @@ func (s *azureStorageInstance) DownloadAsync(name string, data io.WriterAt) (*sy
 		"Downloading blob with name '%s' of size %d from container '%s'.",
 		name, size, s.name)
 
-	numBlocks := int(size / int64(s.props.PutBlockSize))
-	partialBlockSize := int(size % int64(s.props.PutBlockSize))
+	numBlocks := size / s.props.PutBlockSize
+	partialBlockSize := size % s.props.PutBlockSize
 	if partialBlockSize > 0 {
 		numBlocks++
 	}
@@ -650,10 +673,10 @@ func (s *azureStorageInstance) DownloadAsync(name string, data io.WriterAt) (*sy
 	hasErrors := false
 	errors := make([]error, numBlocks)
 
-	wg.Add(numBlocks)
-	for i := 0; i < numBlocks; i++ {
+	wg.Add(int(numBlocks))
+	for i = 0; i < numBlocks; i++ {
 
-		go func(blockNum int) {
+		go func(blockNum int64) {
 			defer wg.Done()
 
 			var (
@@ -668,8 +691,8 @@ func (s *azureStorageInstance) DownloadAsync(name string, data io.WriterAt) (*sy
 				"Downloading block %d of blob with name '%s' in container '%s'.",
 				blockNum, name, s.name)
 
-			offset := int64(blockNum) * int64(s.props.PutBlockSize)
-			end := int64(blockNum+1) * int64(s.props.PutBlockSize)
+			offset := blockNum * s.props.PutBlockSize
+			end := (blockNum+1) * s.props.PutBlockSize
 			if end > size {
 				end = size
 			}
@@ -678,6 +701,7 @@ func (s *azureStorageInstance) DownloadAsync(name string, data io.WriterAt) (*sy
 				offset, end,
 				azblob.BlobAccessConditions{},
 				false,
+				azblob.ClientProvidedKeyOptions{},
 			); err != nil {
 				errors[blockNum] = err
 				hasErrors = true

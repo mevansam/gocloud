@@ -4,43 +4,43 @@
   "parameters": {
     "virtualMachines_name": {
       "defaultValue": null,
-      "type": "String"
+      "type": "string"
     },
     "networkInterfaces_name": {
       "defaultValue": null,
-      "type": "String"
+      "type": "string"
     },
     "publicIPAddresses_name": {
       "defaultValue": null,
-      "type": "String"
+      "type": "string"
     },
     "networkSecurityGroups_name": {
       "defaultValue": "cbstest_nsg",
-      "type": "String"
+      "type": "string"
     },
     "virtualNetworks_name": {
       "defaultValue": "cbstest_vnet",
-      "type": "String"
+      "type": "string"
     },
     "subnets_default_name": {
       "defaultValue": "cbstest_subnet",
-      "type": "String"
+      "type": "string"
     },
     "osDisk_name": {
       "defaultvalue": "_cbstestosdisk",
-      "type": "String"
+      "type": "string"
     },
     "securityRules_default_allow_ssh_name": {
       "defaultValue": "cbstest_user",
-      "type": "String"
+      "type": "string"
     },
     "vm_user": {
         "defaultValue": "ubuntu",
-        "type":"String"
+        "type": "string"
     },
     "vm_password": {
         "defaultValue": "CBSt3st!",
-        "type": "String"
+        "type": "string"
     }
   },
   "variables": {},
@@ -320,7 +320,7 @@
       "scale": null,
       "properties": {
         "provisioningState": "Succeeded",
-        "protocol": "TCP",
+        "protocol": "Tcp",
         "sourcePortRange": "*",
         "destinationPortRange": "22",
         "sourceAddressPrefix": "*",

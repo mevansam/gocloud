@@ -33,13 +33,17 @@ func testInstanceCreation(storage cloud.Storage) {
 	storageInstance1, err := storage.NewInstance(containerName1)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(storageInstance1.Name()).To(Equal(containerName1))
-	defer storageInstance1.Delete()
+	defer func() {
+		_ = storageInstance1.Delete()
+	}()
 
 	containerName2 := "test-" + uuid.New().String()
 	storageInstance2, err := storage.NewInstance(containerName2)
 	Expect(err).NotTo(HaveOccurred())
 	Expect(storageInstance2.Name()).To(Equal(containerName2))
-	defer storageInstance2.Delete()
+	defer func() {
+		_ = storageInstance2.Delete()
+	}()
 
 	instances, err := storage.ListInstances()
 	Expect(err).NotTo(HaveOccurred())
@@ -168,7 +172,7 @@ func createTestFiles(
 		err error
 	)
 
-	logger.TraceMessage("Creating temp files in %s.", tmpDir)
+	logger.DebugMessage("Creating temp files in %s.", tmpDir)
 
 	// create bunch of test files and map them to a hierarchical
 	// path names to be used when uploading to storage
@@ -218,7 +222,7 @@ func testFileUploadAndDownload(
 	Expect(len(objectList)).To(Equal(8))
 
 	for i := 0; i < len(objectList); i++ {
-		logger.TraceMessage("Validating object '%sd' is within path request 'aa/bb/'.", objectList[i])
+		logger.DebugMessage("Validating object '%sd' is within path request 'aa/bb/'.", objectList[i])
 		Expect(objectList[i][0:6]).To(Equal("aa/bb/"))
 	}
 
@@ -247,7 +251,7 @@ func testFileUploadAndDownload(
 
 	// clean up
 	wg.Add(len(tmpFiles))
-	for name, _ := range tmpFiles {
+	for name := range tmpFiles {
 
 		go func(name string) {
 			defer wg.Done()
