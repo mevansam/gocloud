@@ -45,6 +45,7 @@ type ComputeInstance interface {
 	ID() string
 	Name() string
 	PublicIP() string
+	PublicDNS() string
 
 	// Returns the instance's run state
 	State() (InstanceState, error)

@@ -298,6 +298,10 @@ func (c *azureComputeInstance) PublicIP() string {
 	return c.publicIP
 }
 
+func (c *azureComputeInstance) PublicDNS() string {
+	return ""
+}
+
 func (c *azureComputeInstance) State() (InstanceState, error) {
 
 	var (

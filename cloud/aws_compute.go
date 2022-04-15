@@ -234,6 +234,14 @@ func (c *awsComputeInstance) PublicIP() string {
 	}
 }
 
+func (c *awsComputeInstance) PublicDNS() string {
+	if c.instance.PublicIpAddress != nil {
+		return *c.instance.PublicDnsName
+	} else {
+		return ""
+	}
+}
+
 func (c *awsComputeInstance) State() (InstanceState, error) {
 
 	var (

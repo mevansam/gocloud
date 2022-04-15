@@ -279,6 +279,10 @@ func (c *googleComputeInstance) PublicIP() string {
 	}
 }
 
+func (c *googleComputeInstance) PublicDNS() string {
+	return ""
+}
+
 func (c *googleComputeInstance) State() (InstanceState, error) {
 
 	var (

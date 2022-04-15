@@ -65,6 +65,7 @@ var _ = Describe("AWS Compute Tests", func() {
 				ec2Instance, exists := testInstances[instance.Name()]
 				Expect(exists).To(BeTrue())
 				Expect(instance.PublicIP()).To(Equal(*ec2Instance.PublicIpAddress))
+				Expect(instance.PublicDNS()).To(Equal(*ec2Instance.PublicDnsName))
 			}
 		})
 

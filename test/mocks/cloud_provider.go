@@ -120,6 +120,10 @@ func (i *FakeComputeInstance) PublicIP() string {
 	return i.publicIP
 }
 
+func (i *FakeComputeInstance) PublicDNS() string {
+	return ""
+}
+
 func (i *FakeComputeInstance) State() (cloud.InstanceState, error) {
 	return i.state, nil
 }
