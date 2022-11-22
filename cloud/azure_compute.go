@@ -26,6 +26,7 @@ type azureComputeInstance struct {
 	name,
 
 	publicIP,
+	publicDNS,
 
 	resourceGroupName,
 	subscriptionID string
@@ -67,7 +68,8 @@ func (c *azureCompute) newAzureComputeInstance(
 		ipName    string
 		ipAddress network.PublicIPAddress
 
-		publicIP string
+		publicIP,
+		publicFQDN string
 	)
 
 	logger.TraceMessage(
@@ -128,8 +130,14 @@ func (c *azureCompute) newAzureComputeInstance(
 		); err != nil {
 			return nil, err
 		}
-		if ipAddress.PublicIPAddressPropertiesFormat.IPAddress != nil {
-			publicIP = *ipAddress.PublicIPAddressPropertiesFormat.IPAddress
+		if ipAddress.PublicIPAddressPropertiesFormat != nil {
+			if ipAddress.PublicIPAddressPropertiesFormat.IPAddress != nil {
+				publicIP = *ipAddress.PublicIPAddressPropertiesFormat.IPAddress
+			}
+			if ipAddress.PublicIPAddressPropertiesFormat.DNSSettings != nil &&
+				ipAddress.PublicIPAddressPropertiesFormat.DNSSettings.Fqdn != nil {
+				publicFQDN = *ipAddress.PublicIPAddressPropertiesFormat.DNSSettings.Fqdn
+			}	
 		}
 	}
 
@@ -138,6 +146,7 @@ func (c *azureCompute) newAzureComputeInstance(
 		name: *vm.Name,
 
 		publicIP: publicIP,
+		publicDNS: publicFQDN,
 
 		resourceGroupName: resourceGroupName,
 		subscriptionID:    c.subscriptionID,
@@ -299,7 +308,7 @@ func (c *azureComputeInstance) PublicIP() string {
 }
 
 func (c *azureComputeInstance) PublicDNS() string {
-	return ""
+	return c.publicDNS
 }
 
 func (c *azureComputeInstance) State() (InstanceState, error) {
@@ -320,7 +329,7 @@ func (c *azureComputeInstance) State() (InstanceState, error) {
 	); err != nil {
 		return StateUnknown, err
 	}
-	logger.TraceMessage("Status for azure VM '%s' in resource group '%s' is: %# v",
+	logger.TraceMessage("Status for azure VM '%s' in resource group '%s' is: %+v",
 		c.name, c.resourceGroupName, instanceView.Statuses)
 
 	if instanceView.Statuses != nil {
