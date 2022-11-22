@@ -14,7 +14,7 @@ import (
 	test_helpers "github.com/mevansam/gocloud/test/helpers"
 )
 
-func TestConfig(t *testing.T) {
+func TestCloud(t *testing.T) {
 	rand.Seed(time.Now().UTC().UnixNano())
 	logger.Initialize()
 
@@ -24,7 +24,7 @@ func TestConfig(t *testing.T) {
 	test_helpers.InitializeAzureEnvironment()
 	test_helpers.InitializeGoogleEnvironment()
 
-	RunSpecs(t, "provider")
+	RunSpecs(t, "cloud")
 }
 
 var _ = AfterSuite(func() {
