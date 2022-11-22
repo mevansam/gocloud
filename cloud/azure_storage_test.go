@@ -1,7 +1,6 @@
 package cloud_test
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/google/uuid"
@@ -92,7 +91,7 @@ var _ = Describe("Azure Storage Tests", func() {
 		)
 
 		BeforeEach(func() {
-			tmpDir, err = ioutil.TempDir("", "azurestoragetest")
+			tmpDir, err = os.MkdirTemp("", "azurestoragetest")
 			Expect(err).NotTo(HaveOccurred())
 
 			tmpFiles = make(map[string]string)

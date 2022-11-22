@@ -2,8 +2,8 @@ package cloud_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"strings"
 	"sync"
 
@@ -181,7 +181,7 @@ func createTestFiles(
 			name := fmt.Sprintf("%s/file%d", path, i)
 			tmpFiles[name] = fmt.Sprintf("%s/file%d", tmpDir, i)
 			tmpFileData[name] = utils.RandomString((rand.Intn(sizeVar) + 1) * blockSize)
-			err = ioutil.WriteFile(tmpFiles[name], []byte(tmpFileData[name]), 0644)
+			err = os.WriteFile(tmpFiles[name], []byte(tmpFileData[name]), 0644)
 			Expect(err).ToNot(HaveOccurred())
 		}
 	}
@@ -243,7 +243,7 @@ func testFileUploadAndDownload(
 
 	for name, file := range tmpFiles {
 		dlFile := file + ".dl"
-		content, err := ioutil.ReadFile(dlFile)
+		content, err := os.ReadFile(dlFile)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(string(content)).To(Equal(tmpFileData[name]))
 	}
