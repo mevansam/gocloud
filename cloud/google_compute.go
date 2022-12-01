@@ -73,14 +73,15 @@ func (c *googleCompute) zoneList() ([]string, error) {
 	)
 
 	if len(c.props.Zone) == 0 {
-		// search all zones for a vm
-		// matching the given name
+		// if zone is not set then return all zones in region
 		if zoneList, err = c.service.Zones.List(c.projectID).Do(); err != nil {
 			return nil, err
 		}
-		zones = make([]string, len(zoneList.Items))
-		for i, z := range zoneList.Items {
-			zones[i] = z.Name
+		zones = make([]string, 0, 5)
+		for _, z := range zoneList.Items {
+			if path.Base(z.Region) == c.props.Region {
+				zones = append(zones, z.Name)
+			}
 		}
 
 	} else {
