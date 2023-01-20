@@ -12,9 +12,6 @@ import (
 	forms_config "github.com/mevansam/gocloud/forms"
 )
 
-// user agent to use for HTTP(s) API requests
-const httpUserAgent = `cloud-builder`
-
 // interface for a configurable cloud provider
 type CloudProvider interface {
 	config.Configurable
