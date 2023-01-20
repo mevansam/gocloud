@@ -77,7 +77,8 @@ func testConfigReferenceOutput(cloudProvider provider.CloudProvider, expected st
 
 		// close piped output
 		os.Stdout.Close()
-		io.Copy(&output, stdOutReader)
+		_, err = io.Copy(&output, stdOutReader)
+		Expect(err).NotTo(HaveOccurred())
 	}()
 
 	// wait until signal is received
