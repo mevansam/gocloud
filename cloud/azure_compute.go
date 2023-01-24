@@ -6,9 +6,13 @@ import (
 	"path"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute"
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
-	"github.com/Azure/go-autorest/autorest"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
+
 	"github.com/mevansam/goutils/logger"
 )
 
@@ -17,8 +21,9 @@ type azureCompute struct {
 	locationName,
 	subscriptionID string
 
-	ctx        context.Context
-	authorizer *autorest.BearerAuthorizer
+	ctx         context.Context	
+	clientCreds *azidentity.ClientSecretCredential
+	clientOpts  *arm.ClientOptions
 }
 
 type azureComputeInstance struct {
@@ -31,13 +36,15 @@ type azureComputeInstance struct {
 	resourceGroupName,
 	subscriptionID string
 
-	ctx        context.Context
-	authorizer *autorest.BearerAuthorizer
+	ctx         context.Context	
+	clientCreds *azidentity.ClientSecretCredential
+	clientOpts  *arm.ClientOptions
 }
 
 func NewAzureCompute(
 	ctx context.Context,
-	authorizer *autorest.BearerAuthorizer,
+	clientCreds *azidentity.ClientSecretCredential,
+	clientOpts *arm.ClientOptions,
 	resourceGroupName,
 	locationName,
 	subscriptionID string,
@@ -49,25 +56,29 @@ func NewAzureCompute(
 
 		subscriptionID: subscriptionID,
 
-		ctx:        ctx,
-		authorizer: authorizer,
+		ctx:         ctx,
+		clientCreds: clientCreds,
+		clientOpts:  clientOpts,
 	}, nil
 }
 
 func (c *azureCompute) newAzureComputeInstance(
 	resourceGroupName string,
-	vm compute.VirtualMachine,
+	vm *armcompute.VirtualMachine,
 ) (*azureComputeInstance, error) {
 
 	var (
 		err error
 
 		nicName string
-		nic     network.Interface
 
-		ipName    string
-		ipAddress network.PublicIPAddress
+		itfClient *armnetwork.InterfacesClient
+		itf       armnetwork.InterfacesClientGetResponse
 
+		addrClient *armnetwork.PublicIPAddressesClient
+		addr       armnetwork.PublicIPAddressesClientGetResponse
+
+		ipName,
 		publicIP,
 		publicFQDN string
 	)
@@ -77,14 +88,16 @@ func (c *azureCompute) newAzureComputeInstance(
 		*vm.Name, resourceGroupName,
 	)
 
-	if vm.NetworkProfile.NetworkInterfaces != nil {
-		nicItfList := *vm.NetworkProfile.NetworkInterfaces
+	networkProfile := vm.Properties.NetworkProfile
+
+	if networkProfile.NetworkInterfaces != nil {
+		nicItfList := networkProfile.NetworkInterfaces
 		if len(nicItfList) == 1 {
 			nicName = path.Base(*nicItfList[0].ID)
 		} else {
 			for _, nic := range nicItfList {
-				if nic.NetworkInterfaceReferenceProperties != nil {
-					if nic.Primary != nil && *nic.Primary {
+				if nic.Properties != nil {
+					if nic.Properties.Primary != nil && *nic.Properties.Primary {
 						nicName = path.Base(*nic.ID)
 					}
 				}
@@ -93,52 +106,41 @@ func (c *azureCompute) newAzureComputeInstance(
 	}
 
 	if len(nicName) > 0 {
-		nicClient := network.NewInterfacesClient(c.subscriptionID)
-		nicClient.Authorizer = c.authorizer
-		_ = nicClient.AddToUserAgent(httpUserAgent)
 
 		logger.TraceMessage(
 			"Retrieving public IP of primary NIC '%s' of VM '%s' in resource group '%s'.",
 			nicName, *vm.Name, resourceGroupName,
 		)
 
-		if nic, err = nicClient.Get(c.ctx,
-			resourceGroupName,
-			nicName, ""); err != nil {
+		if itfClient, err = armnetwork.NewInterfacesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
+			return nil, err
+		}
+		if itf, err = itfClient.Get(c.ctx, resourceGroupName, nicName, nil); err != nil {
 			return nil, err
 		}
 
-		if nic.IPConfigurations != nil {
-			ipConfigList := *nic.IPConfigurations
+		if itf.Properties.IPConfigurations != nil {
+			ipConfigList := itf.Properties.IPConfigurations
 			for _, ipConfig := range ipConfigList {
-				if ipConfig.InterfaceIPConfigurationPropertiesFormat != nil &&
-					(*ipConfig.InterfaceIPConfigurationPropertiesFormat).PublicIPAddress != nil {
-
-					ipName = path.Base(*(*(*ipConfig.InterfaceIPConfigurationPropertiesFormat).PublicIPAddress).ID)
+				if ipConfig.Properties.PublicIPAddress != nil {
+					ipName = path.Base(*ipConfig.Properties.PublicIPAddress.ID)
 				}
 			}
 		}
 
-		addressClient := network.NewPublicIPAddressesClient(c.subscriptionID)
-		addressClient.Authorizer = c.authorizer
-		_ = addressClient.AddToUserAgent(httpUserAgent)
-
-		if ipAddress, err = addressClient.Get(c.ctx,
-			resourceGroupName,
-			ipName,
-			"",
-		); err != nil {
+		if addrClient, err = armnetwork.NewPublicIPAddressesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
 			return nil, err
 		}
-		if ipAddress.PublicIPAddressPropertiesFormat != nil {
-			if ipAddress.PublicIPAddressPropertiesFormat.IPAddress != nil {
-				publicIP = *ipAddress.PublicIPAddressPropertiesFormat.IPAddress
-			}
-			if ipAddress.PublicIPAddressPropertiesFormat.DNSSettings != nil &&
-				ipAddress.PublicIPAddressPropertiesFormat.DNSSettings.Fqdn != nil {
-				publicFQDN = *ipAddress.PublicIPAddressPropertiesFormat.DNSSettings.Fqdn
-			}	
+		if addr, err = addrClient.Get(c.ctx, resourceGroupName, ipName, nil); err != nil {
+			return nil, err
 		}
+
+		if addr.Properties.IPAddress != nil {
+			publicIP = *addr.Properties.IPAddress
+		}
+		if addr.Properties.DNSSettings != nil && addr.Properties.DNSSettings.Fqdn != nil {
+			publicFQDN = *addr.Properties.DNSSettings.Fqdn
+		}	
 	}
 
 	return &azureComputeInstance{
@@ -151,8 +153,9 @@ func (c *azureCompute) newAzureComputeInstance(
 		resourceGroupName: resourceGroupName,
 		subscriptionID:    c.subscriptionID,
 
-		ctx:        c.ctx,
-		authorizer: c.authorizer,
+		ctx:         c.ctx,
+		clientCreds: c.clientCreds,
+		clientOpts:  c.clientOpts,
 	}, nil
 }
 
@@ -166,22 +169,21 @@ func (c *azureCompute) GetInstance(name string) (ComputeInstance, error) {
 	var (
 		err error
 
-		vm compute.VirtualMachine
+		client *armcompute.VirtualMachinesClient
+		resp   armcompute.VirtualMachinesClientGetResponse
 	)
 
-	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
-	vmClient.Authorizer = c.authorizer
-	_ = vmClient.AddToUserAgent(httpUserAgent)
-
-	if vm, err = vmClient.Get(c.ctx,
-		c.resourceGroupName,
-		name,
-		compute.InstanceViewTypesInstanceView,
-	); err != nil {
+	if client, err = armcompute.NewVirtualMachinesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
+		return nil, err
+	}
+	if resp, err = client.Get(c.ctx, c.resourceGroupName, name, 
+		&armcompute.VirtualMachinesClientGetOptions{
+			Expand: to.Ptr(armcompute.InstanceViewTypesInstanceView),
+		} ); err != nil {
 		return nil, err
 	}
 
-	return c.newAzureComputeInstance(c.resourceGroupName, vm)
+	return c.newAzureComputeInstance(c.resourceGroupName, &resp.VirtualMachine)
 }
 
 func (c *azureCompute) GetInstances(ids []string) ([]ComputeInstance, error) {
@@ -262,34 +264,35 @@ func (c *azureCompute) listInstances(
 	var (
 		err error
 
-		items compute.VirtualMachineListResultIterator
-		value compute.VirtualMachine
+		client *armcompute.VirtualMachinesClient
+		resp   armcompute.VirtualMachinesClientListResponse
 
 		instance ComputeInstance
 	)
 
-	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
-	vmClient.Authorizer = c.authorizer
-	_ = vmClient.AddToUserAgent(httpUserAgent)
-
-	if items, err = vmClient.ListComplete(c.ctx, resourceGroupName, ""); err != nil {
+	if client, err = armcompute.NewVirtualMachinesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
 		return nil, err
 	}
 
+	listVMs := client.NewListPager(resourceGroupName, nil)
 	instances := []ComputeInstance{}
-	for items.NotDone() {
-		value = items.Value()
-
-		if instance, err = c.newAzureComputeInstance(resourceGroupName, value); err != nil {
-			return nil, err
+	for listVMs.More() {
+		if resp, err = listVMs.NextPage(c.ctx); err != nil {
+			logger.ErrorMessage(
+				"Failed to get next page of vm list for resource group '%s': %s", 
+				resourceGroupName, err.Error(),
+			)
+			break
 		}
-		instances = append(instances, instance)
 
-		if err = items.Next(); err != nil {
-			return nil, err
-		}
-	}
-
+		for _, vm := range resp.Value {
+			if instance, err = c.newAzureComputeInstance(resourceGroupName, vm); err != nil {
+				return nil, err
+			}
+			instances = append(instances, instance)
+		}	
+	}	
+	
 	return instances, nil
 }
 
@@ -316,24 +319,22 @@ func (c *azureComputeInstance) State() (InstanceState, error) {
 	var (
 		err error
 
-		instanceView compute.VirtualMachineInstanceView
+		client *armcompute.VirtualMachinesClient
+		resp   armcompute.VirtualMachinesClientInstanceViewResponse
 	)
 
-	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
-	vmClient.Authorizer = c.authorizer
-	_ = vmClient.AddToUserAgent(httpUserAgent)
-
-	if instanceView, err = vmClient.InstanceView(c.ctx,
-		c.resourceGroupName,
-		c.name,
-	); err != nil {
+	if client, err = armcompute.NewVirtualMachinesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
 		return StateUnknown, err
 	}
-	logger.TraceMessage("Status for azure VM '%s' in resource group '%s' is: %+v",
-		c.name, c.resourceGroupName, instanceView.Statuses)
+	if resp, err = client.InstanceView(c.ctx, c.resourceGroupName, c.name, nil); err != nil {
+		return StateUnknown, err
+	}
 
-	if instanceView.Statuses != nil {
-		statuses := *instanceView.Statuses
+	logger.TraceMessage("Status for azure VM '%s' in resource group '%s' is: %# v",
+		c.name, c.resourceGroupName, resp.Statuses)
+
+	if resp.Statuses != nil {
+		statuses := resp.Statuses
 		if len(statuses) > 1 {
 			status := statuses[len(statuses)-1].DisplayStatus
 			if status != nil {
@@ -356,23 +357,24 @@ func (c *azureComputeInstance) Start() error {
 	var (
 		err error
 
-		startFuture compute.VirtualMachinesStartFuture
+		client *armcompute.VirtualMachinesClient
+		presp  *runtime.Poller[armcompute.VirtualMachinesClientStartResponse]
 	)
 
-	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
-	vmClient.Authorizer = c.authorizer
-	_ = vmClient.AddToUserAgent(httpUserAgent)
+	if client, err = armcompute.NewVirtualMachinesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
+		return err
+	}
 
 	logger.TraceMessage("Starting azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
 
-	if startFuture, err = vmClient.Start(c.ctx,
-		c.resourceGroupName,
-		c.name,
-	); err != nil {
+	if presp, err = client.BeginStart(c.ctx, c.resourceGroupName, c.name, nil); err != nil {
 		return err
 	}
-	err = startFuture.WaitForCompletionRef(c.ctx, vmClient.BaseClient.Client)
+	if _, err = presp.PollUntilDone(c.ctx, nil); err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -381,23 +383,24 @@ func (c *azureComputeInstance) Restart() error {
 	var (
 		err error
 
-		restartFuture compute.VirtualMachinesRestartFuture
+		client *armcompute.VirtualMachinesClient
+		presp  *runtime.Poller[armcompute.VirtualMachinesClientRestartResponse]
 	)
 
-	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
-	vmClient.Authorizer = c.authorizer
-	_ = vmClient.AddToUserAgent(httpUserAgent)
+	if client, err = armcompute.NewVirtualMachinesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
+		return err
+	}
 
 	logger.TraceMessage("Restarting azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
 
-	if restartFuture, err = vmClient.Restart(c.ctx,
-		c.resourceGroupName,
-		c.name,
-	); err != nil {
+	if presp, err = client.BeginRestart(c.ctx, c.resourceGroupName, c.name, nil); err != nil {
 		return err
 	}
-	err = restartFuture.WaitForCompletionRef(c.ctx, vmClient.BaseClient.Client)
+	if _, err = presp.PollUntilDone(c.ctx, nil); err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -406,39 +409,35 @@ func (c *azureComputeInstance) Stop() error {
 	var (
 		err error
 
-		offFuture     compute.VirtualMachinesPowerOffFuture
-		deallocFuture compute.VirtualMachinesDeallocateFuture
+		client *armcompute.VirtualMachinesClient
+
+		pOffResp     *runtime.Poller[armcompute.VirtualMachinesClientPowerOffResponse]
+		pDeallocResp *runtime.Poller[armcompute.VirtualMachinesClientDeallocateResponse]
 	)
 
-	vmClient := compute.NewVirtualMachinesClient(c.subscriptionID)
-	vmClient.Authorizer = c.authorizer
-	_ = vmClient.AddToUserAgent(httpUserAgent)
+	if client, err = armcompute.NewVirtualMachinesClient(c.subscriptionID, c.clientCreds, c.clientOpts); err != nil {
+		return err
+	}
 
 	logger.TraceMessage("Powering off azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
 
-	if offFuture, err = vmClient.PowerOff(c.ctx,
-		c.resourceGroupName,
-		c.name,
-		nil,
-	); err != nil {
+	if pOffResp, err = client.BeginPowerOff(c.ctx, c.resourceGroupName, c.name, nil); err != nil {
 		return err
 	}
-	if err = offFuture.WaitForCompletionRef(c.ctx, vmClient.BaseClient.Client); err != nil {
+	if _, err = pOffResp.PollUntilDone(c.ctx, nil); err != nil {
 		return err
 	}
 
 	logger.TraceMessage("Deallocating azure VM '%s' in resource group '%s'.",
 		c.name, c.resourceGroupName)
 
-	if deallocFuture, err = vmClient.Deallocate(c.ctx,
-		c.resourceGroupName,
-		c.name,
-		nil,
-	); err != nil {
+	if pDeallocResp, err = client.BeginDeallocate(c.ctx, c.resourceGroupName, c.name, nil); err != nil {
 		return err
 	}
-	err = deallocFuture.WaitForCompletionRef(c.ctx, vmClient.BaseClient.Client)
+	if _, err = pDeallocResp.PollUntilDone(c.ctx, nil); err != nil {
+		return err
+	}
 	return err
 }
 

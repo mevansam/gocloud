@@ -101,7 +101,9 @@ func testObjectUploadAndDownload(storageInstance cloud.StorageInstance) {
 			defer GinkgoRecover()
 
 			err = storageInstance.Upload(name, "text/plain", strings.NewReader(data), int64(len(data)))
-			Expect(err).NotTo(HaveOccurred())
+			if err != nil {
+				Fail(fmt.Sprintf("Upload error: %s\n", err.Error()))
+			}
 		}(name, data)
 	}
 	wg.Wait()
@@ -126,7 +128,9 @@ func testObjectUploadAndDownload(storageInstance cloud.StorageInstance) {
 
 			var b strings.Builder
 			err = storageInstance.Download(name, &b)
-			Expect(err).NotTo(HaveOccurred())
+			if err != nil {
+				Fail(fmt.Sprintf("Download error: %s\n", err.Error()))
+			}
 			Expect(b.String()).To(Equal(data))
 
 		}(objectList[i], objectData[objectList[i]])

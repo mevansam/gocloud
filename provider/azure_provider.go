@@ -3,17 +3,23 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"regexp"
 	"strings"
 
+	"github.com/mevansam/goutils/rest"
 	"github.com/mevansam/goutils/utils"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/resources/mgmt/subscriptions"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
-	"github.com/Azure/go-autorest/autorest"
-	"github.com/Azure/go-autorest/autorest/adal"
-	"github.com/Azure/go-autorest/autorest/azure"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	azcloud "github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
 	"github.com/google/uuid"
+
 	"github.com/mevansam/gocloud/cloud"
 	"github.com/mevansam/goforms/config"
 	"github.com/mevansam/goforms/forms"
@@ -21,6 +27,18 @@ import (
 
 	forms_config "github.com/mevansam/gocloud/forms"
 )
+
+/*
+Setting up AZ Account:
+
+1) Go to https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBlade and add a new subscription
+2) Install the Azure CLI - https://learn.microsoft.com/en-us/cli/azure/install-azure-cli.
+3) From a command/terminal window run:
+az logout && az login
+az account set --subscription="SUBSCRIPTION_ID"
+az ad sp create-for-rbac --role="Owner" --scopes="/subscriptions/SUBSCRIPTION_ID"
+
+*/
 
 type azureProvider struct {
 	cloudProvider
@@ -32,8 +50,11 @@ type azureProvider struct {
 	// been prepared to make API requests
 	isInitialized bool
 
-	authorizer    *autorest.BearerAuthorizer
-	defaultResGrp resources.Group
+	clientCreds   *azidentity.ClientSecretCredential
+	clientOpts    *arm.ClientOptions
+	defaultResGrp armresources.ResourceGroup
+
+	servicePrincipalID string
 }
 
 type azureProviderConfig struct {
@@ -46,11 +67,10 @@ type azureProviderConfig struct {
 	DefaultLocation      *string `json:"default_location,omitempty" form_field:"default_location"`
 }
 
-var environments = map[string]string{
-	"public":       "AzurePublicCloud",
-	"usgovernment": "AzureUSGovernmentCloud",
-	"german":       "AzureGermanCloud",
-	"china":        "AzureChinaCloud",
+var environments = map[string]azcloud.Configuration{
+	"public":       azcloud.AzurePublic,
+	"usgovernment": azcloud.AzureGovernment,
+	"china":        azcloud.AzureChina,
 }
 
 var saNameRegex = regexp.MustCompile(`[-_:]`)
@@ -197,6 +217,90 @@ func (p *azureProvider) createAzureInputForm() error {
 	return nil
 }
 
+func (p *azureProvider) connect(config *azureProviderConfig) error {
+
+	var (
+		err error
+		ok  bool
+
+		env     azcloud.Configuration
+		options azidentity.ClientSecretCredentialOptions
+
+		token azcore.AccessToken
+	)
+
+	if env, ok = environments[*config.Environment]; !ok {
+		env = azcloud.AzurePublic
+	}
+	options.ClientOptions = azcore.ClientOptions{
+		Cloud: env,
+	}
+	p.clientOpts = &arm.ClientOptions{
+		ClientOptions: options.ClientOptions,
+	}
+
+	if p.clientCreds, err = azidentity.NewClientSecretCredential(
+		*config.TenantID, 
+		*config.ClientID, 
+		*config.ClientSecret, 
+		&options,
+	); err != nil {
+		return err
+	}
+
+	// To assign roles/permissions the principal/object id of
+	// the service principal (i.e. client_id) used is required.
+	// There is no azure sdk function to retrieve this so a
+	// direct rest api call is made to the Microsoft Graph API.
+	// Once azure SDK implements a suitable function to the
+	// following should be refactored.
+	//
+	// Equivalent CLI cmd:
+	//
+	// az ad sp show --id $ARM_CLIENT_ID
+
+	if token, err = p.clientCreds.GetToken(p.ctx, policy.TokenRequestOptions{
+		Scopes: []string{"https://graph.microsoft.com//.default"},
+	}); err != nil {
+		return err
+	}
+	appResp := struct {
+		Value []struct {
+			Id string `json:"id,omitempty"`
+		}
+	}{}
+	response := &rest.Response{
+		Body: &appResp,
+		Error: struct {
+			Message *string `json:"message,omitempty"`
+		}{},
+	}	
+	restApiClient := rest.NewRestApiClient(p.ctx, "https://graph.microsoft.com")
+	err = restApiClient.NewRequest(
+		&rest.Request{
+			Path: "/v1.0/servicePrincipals",
+			Headers: rest.NV{
+				"Authorization": fmt.Sprintf("Bearer %s", token.Token),
+			},
+			RawQuery: fmt.Sprintf("$filter=%s",
+				url.PathEscape(fmt.Sprintf("servicePrincipalNames/any(c:c eq '%s')", *config.ClientID)),
+			),					
+		},
+	).DoGet(response)
+	if err != nil {
+		return err
+	}
+
+	if len(appResp.Value) == 0 {
+		return fmt.Errorf(
+			"unable to determine service principal for client id '%s'", 
+			*config.ClientID,
+		)
+	}
+	p.servicePrincipalID = appResp.Value[0].Id
+	return nil
+}
+
 // Azure Provider helper function specific to the azure
 // provider to determine the storage account name derived
 // from the default resource group name.
@@ -261,10 +365,11 @@ func (p *azureProvider) Connect() error {
 
 	var (
 		err error
+		
+		rscGrpClient *armresources.ResourceGroupsClient
 
-		env         azure.Environment
-		oauthConfig *adal.OAuthConfig
-		token       *adal.ServicePrincipalToken
+		getresp armresources.ResourceGroupsClientGetResponse
+		crtresp armresources.ResourceGroupsClientCreateOrUpdateResponse
 	)
 
 	if !p.IsValid() {
@@ -274,47 +379,35 @@ func (p *azureProvider) Connect() error {
 
 		config := p.cloudProvider.
 			config.(*azureProviderConfig)
+		
+		if err = p.connect(config); err != nil {
+			return err
+		}
 
-		if env, err = azure.EnvironmentFromName(
-			environments[*config.Environment],
-		); err != nil {
-			return err
-		}
-		if oauthConfig, err = adal.NewOAuthConfig(
-			env.ActiveDirectoryEndpoint,
-			*config.TenantID,
-		); err != nil {
-			return err
-		}
-		if token, err = adal.NewServicePrincipalToken(
-			*oauthConfig,
-			*config.ClientID,
-			*config.ClientSecret,
-			env.ResourceManagerEndpoint,
+		if rscGrpClient, err = armresources.NewResourceGroupsClient(
+			*config.SubscriptionID, 
+			p.clientCreds, 
+			p.clientOpts,
 		); err != nil {
 			return err
 		}
 
-		p.authorizer = autorest.NewBearerAuthorizer(token)
-
-		// ensure default resource group exists
-		client := resources.NewGroupsClient(*config.SubscriptionID)
-		client.Authorizer = p.authorizer
-		_ = client.AddToUserAgent(httpUserAgent)
-
-		if p.defaultResGrp, err = client.Get(p.ctx,
-			*config.DefaultResourceGroup,
-		); err != nil {
+		if getresp, err = rscGrpClient.Get(p.ctx, *config.DefaultResourceGroup, nil); err != nil {
 
 			// create default resource group
-			if p.defaultResGrp, err = client.CreateOrUpdate(p.ctx,
+			if crtresp, err = rscGrpClient.CreateOrUpdate(p.ctx,
 				*config.DefaultResourceGroup,
-				resources.Group{
+				armresources.ResourceGroup{
 					Location: config.DefaultLocation,
 				},
+				nil,
 			); err != nil {
 				return err
-			}
+			}			
+			p.defaultResGrp = crtresp.ResourceGroup
+
+		} else {
+			p.defaultResGrp = getresp.ResourceGroup
 		}
 
 		p.isInitialized = true
@@ -333,36 +426,49 @@ func (p *azureProvider) Region() *string {
 func (p *azureProvider) GetRegions() []RegionInfo {
 
 	var (
-		err            error
+		err error
+
+		client *armsubscriptions.Client
+
 		regionInfoList []RegionInfo
+		resp           armsubscriptions.ClientListLocationsResponse
 	)
 
 	if p.isInitialized {
+		if client, err = armsubscriptions.NewClient(p.clientCreds, nil); err == nil {
+			
+			config := p.cloudProvider.
+				config.(*azureProviderConfig)
 
-		var (
-			result subscriptions.LocationListResult
-		)
-
-		client := subscriptions.NewClient()
-		client.Authorizer = p.authorizer
-		_ = client.AddToUserAgent(httpUserAgent)
-
-		config := p.cloudProvider.
-			config.(*azureProviderConfig)
-
-		result, err = client.ListLocations(p.ctx, *config.SubscriptionID, nil)
-		if err == nil {
+			listLocations := client.NewListLocationsPager(
+				*config.SubscriptionID, 
+				&armsubscriptions.ClientListLocationsOptions{
+					IncludeExtendedLocations: to.Ptr(false),
+				},
+			)
 			regionInfoList = []RegionInfo{}
-			for _, l := range *result.Value {
-				if (!strings.HasSuffix(*l.Name, "stage")) {
-					regionInfoList = append(regionInfoList, RegionInfo{*l.Name, *l.DisplayName})
+			for listLocations.More() {
+				if resp, err = listLocations.NextPage(p.ctx); err != nil {
+					break
+				}
+
+				for _, l := range resp.LocationListResult.Value {
+					if ( len(*l.Name) > 0 &&
+						!strings.HasSuffix(*l.Name, "stage") && 
+						!strings.HasSuffix(*l.Name, "stg") ) {
+
+						regionInfoList = append(regionInfoList, RegionInfo{*l.Name, *l.DisplayName})
+					}
 				}
 			}
-			sortRegions(regionInfoList)
-			logger.TraceMessage("Azure location list retrieved via API: %# v", regionInfoList)
-
-			return regionInfoList
+			if err == nil {
+				sortRegions(regionInfoList)
+				logger.TraceMessage("Azure location list retrieved via API: %# v", regionInfoList)
+	
+				return regionInfoList	
+			}
 		}
+
 		logger.DebugMessage("Unable to retrieve Azure locations via API call: %s", err.Error())
 	}
 
@@ -408,6 +514,8 @@ func (p *azureProvider) GetRegions() []RegionInfo {
 		{"norway", "Norway"},
 		{"norwayeast", "Norway East"},
 		{"norwaywest", "Norway West"},
+		{"qatarcentral", "Qatar Central"},
+		{"singapore", "Singapore"},
 		{"southafrica", "South Africa"},
 		{"southafricanorth", "South Africa North"},
 		{"southafricawest", "South Africa West"},
@@ -457,7 +565,8 @@ func (p *azureProvider) GetCompute() (cloud.Compute, error) {
 		config.(*azureProviderConfig)
 
 	return cloud.NewAzureCompute(p.ctx,
-		p.authorizer,
+		p.clientCreds,
+		p.clientOpts,
 		*config.DefaultResourceGroup,
 		*config.DefaultLocation,
 		*config.SubscriptionID,
@@ -474,10 +583,12 @@ func (p *azureProvider) GetStorage() (cloud.Storage, error) {
 		config.(*azureProviderConfig)
 
 	return cloud.NewAzureStorage(p.ctx,
-		p.authorizer,
+		p.clientCreds,
+		p.clientOpts,
 		GetAzureStorageAccountName(p),
 		*config.DefaultResourceGroup,
 		*config.DefaultLocation,
 		*config.SubscriptionID,
+		p.servicePrincipalID,
 	)
 }

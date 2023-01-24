@@ -3,7 +3,6 @@ package cloud
 import (
 	"io"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/mevansam/goutils/logger"
@@ -90,12 +89,6 @@ type StorageInstance interface {
 
 	Download(name string, data io.Writer) error
 	DownloadFile(name, path string) error
-
-	// Downloads an object asynchronously by executing
-	// multiple download calls asynchronously to download
-	// the blob in chunks. The caller needs to handle
-	// errors from each of the asynchronous calls.
-	DownloadAsync(name string, data io.WriterAt) (*sync.WaitGroup, int64, []error, error)
 }
 
 // test tcp connection
@@ -113,6 +106,3 @@ func canConnect(endpoint string) bool {
 	defer conn.Close()
 	return true
 }
-
-// user agent to use for HTTP(s) API requests
-const httpUserAgent = `cloud-builder`
