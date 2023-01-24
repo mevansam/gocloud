@@ -109,7 +109,7 @@ func DeleteAzureResourceGroup(azureResourceGroup string) {
 	ctx := context.Background()
 
 	if _, err = client.Get(ctx, azureResourceGroup); err == nil {
-		_, err = client.Delete(ctx, azureResourceGroup)
+		_, err = client.Delete(ctx, azureResourceGroup, "")
 		Expect(err).NotTo(HaveOccurred())
 	}
 }
@@ -183,7 +183,10 @@ func AzureLocations(environment string) map[string]string {
 		logger.TraceMessage("\nAzure locations retrieved from API call:")
 		locationMap = make(map[string]string)
 		for _, l := range *result.Value {
-			if (!strings.HasSuffix(*l.Name, "stage")) {
+			if ( len(*l.Name) > 0 && 
+				!strings.HasSuffix(*l.Name, "stage") && 
+				!strings.HasSuffix(*l.Name, "stg") ) {
+				
 				logger.TraceMessage("  * %s - %s", *l.Name, *l.DisplayName)
 				locationMap[*l.Name] = *l.DisplayName	
 			}
@@ -258,7 +261,7 @@ func AzureDeployTestInstances(name string, numInstances int) map[string]map[stri
 								"value": ipName,
 							},
 						},
-						Mode: resources.DeploymentModeIncremental,
+						Mode: resources.Incremental,
 					},
 				},
 			)
