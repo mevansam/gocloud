@@ -2,7 +2,6 @@ package provider
 
 import (
 	"encoding/json"
-	"fmt"
 	"sort"
 
 	"github.com/mevansam/gocloud/cloud"
@@ -34,6 +33,10 @@ type CloudProvider interface {
 
 	// Returns the provider's storage entity
 	GetStorage() (cloud.Storage, error)
+
+	// adds the provider configuration variables
+	// to the given variable map
+	GetVars(vars map[string]string) error	
 }
 
 // base cloud provider implementation
@@ -60,8 +63,7 @@ func NewCloudProvider(iaas string) (CloudProvider, error) {
 	)
 
 	if newProvider, exists = providerNames[iaas]; !exists {
-		return nil,
-			fmt.Errorf("provider for iaas '%s' is currently not handled", iaas)
+		return newNullProvider(iaas)
 	}
 	return newProvider()
 }
@@ -130,6 +132,34 @@ func (p *cloudProvider) GetValue(name string) (*string, error) {
 }
 
 func (p *cloudProvider) Reset() {
+}
+
+// interface: provider/CloudProvider functions
+
+func (p *cloudProvider) GetVars(vars map[string]string) error {
+
+	var (
+		err error
+
+		form  forms.InputForm
+		field *forms.InputField
+
+		value *string
+	)
+
+	if form, err = p.InputForm(); err != nil {
+		return err
+	}
+	if form != nil {
+		for _, field = range form.InputFields() {
+			if value = field.Value(); value != nil {
+				for _, envVar := range field.EnvVars() {
+					vars[envVar] = *value
+				}
+			}
+		}		
+	}
+	return nil
 }
 
 // interface: encoding/json/Unmarshaler

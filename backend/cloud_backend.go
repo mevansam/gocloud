@@ -11,8 +11,15 @@ import (
 	forms_config "github.com/mevansam/gocloud/forms"
 )
 
+type CloudBackendProperties struct {
+	StatePath string
+}
+
 type CloudBackend interface {
 	config.Configurable
+
+	// additional backend properties
+	SetProperties(props interface{})
 
 	// configures the storage for this backend with common
 	// attributes fetched from a compatible provider
@@ -21,9 +28,17 @@ type CloudBackend interface {
 		storagePrefix, stateKey string,
 	) error
 
+	// the cloud provider associated with this backend. not 
+	// all backends have an associated provider.
+	GetProviderType() string
+
 	// retrieves the storage instance name from the
 	// storage backend configuration
 	GetStorageInstanceName() string
+
+	// adds the backend configuration variables
+	// to the given variable map
+	GetVars(vars map[string]string) error
 }
 
 // base cloud backend implementation
@@ -40,6 +55,7 @@ var backendNames = map[string]newBackend{
 	"s3":      newS3Backend,
 	"azurerm": newAzureRMBackend,
 	"gcs":     newGCSBackend,
+	"local":   newLocalBackend,
 }
 
 func NewCloudBackend(name string) (CloudBackend, error) {
@@ -50,8 +66,7 @@ func NewCloudBackend(name string) (CloudBackend, error) {
 	)
 
 	if newBackend, exists = backendNames[name]; !exists {
-		return nil,
-			fmt.Errorf("backend named '%s' is currently not handled", name)
+		return newNullBackend(name)
 	}
 	return newBackend()
 }
@@ -122,6 +137,38 @@ func (b *cloudBackend) Reset() {
 }
 
 // interface: backend/CloudBackend functions
+
+func (b *cloudBackend) SetProperties(props interface{}) {
+}
+
+func (b *cloudBackend) GetVars(vars map[string]string) error {
+
+	var (
+		err error
+
+		form  forms.InputForm
+		field *forms.InputField
+
+		value *string
+	)
+
+	if form, err = b.InputForm(); err != nil {
+		return err
+	}
+	if form != nil {
+		for _, field = range form.InputFields() {
+
+			if value = field.Value(); value == nil {
+				return fmt.Errorf(
+					"backend '%s' input field '%s' was nil",
+					b.Name(),
+					field.Name())
+			}
+			vars[field.Name()] = *value
+		}
+	}
+	return nil
+}
 
 func (b *cloudBackend) GetProviderType() string {
 	return b.providerType
