@@ -1,8 +1,6 @@
 package mocks
 
 import (
-	"fmt"
-
 	"github.com/mevansam/gocloud/provider"
 
 	config_mocks "github.com/mevansam/goforms/test/mocks"
@@ -42,8 +40,4 @@ func (f *FakeCloudBackend) Configure(
 
 func (f *FakeCloudBackend) GetStorageInstanceName() string {
 	return "fake"
-}
-
-func (f *FakeCloudBackend) GetVars(vars map[string]string) error {
-	return fmt.Errorf("not implemented")
 }

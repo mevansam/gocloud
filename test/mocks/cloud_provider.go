@@ -56,10 +56,6 @@ func (f *FakeCloudProvider) GetStorage() (cloud.Storage, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (f *FakeCloudProvider) GetVars(vars map[string]string) error {
-	return fmt.Errorf("not implemented")
-}
-
 type FakeCompute struct {
 	Instances []cloud.ComputeInstance
 }
