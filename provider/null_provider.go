@@ -54,11 +54,12 @@ func (p *nullProvider) Connect() error {
 }
 
 func (p *nullProvider) Region() *string {
-	return nil
+	var region string
+	return &region
 }
 
 func (p *nullProvider) GetRegions() []RegionInfo {
-	return []RegionInfo{}
+	return []RegionInfo{{Name: ""}}
 }
 
 func (p *nullProvider) GetCompute() (cloud.Compute, error) {
