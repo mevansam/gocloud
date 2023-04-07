@@ -121,11 +121,11 @@ func (b *localBackend) Configure(
 		}
 	} else {
 		if !info.IsDir() {
-			return fmt.Errorf("local backend state path '%s' is not valie", b.statePath)
+			return fmt.Errorf("local backend state path '%s' is not valid", b.statePath)
 		}	
 	}
 
-	localStatePath := filepath.Join(b.statePath, "local.tfstate")
+	localStatePath := filepath.Join(b.statePath, storagePrefix, "local.tfstate")
 	config := b.cloudBackend.
 		config.(*localBackendConfig)
 	config.Path = &localStatePath
