@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/mevansam/goutils/logger"
+	"github.com/mevansam/goutils/network"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 )
@@ -343,9 +344,7 @@ func (c *awsComputeInstance) CanConnect(port int) bool {
 
 	publicIP := c.PublicIP()
 	if publicIP != "" {
-		return canConnect(
-			fmt.Sprintf("%s:%d", publicIP, port),
-		)
+		return network.CanConnect(publicIP, port)
 	} else {
 		return false
 	}

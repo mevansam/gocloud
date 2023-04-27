@@ -2,10 +2,6 @@ package cloud
 
 import (
 	"io"
-	"net"
-	"time"
-
-	"github.com/mevansam/goutils/logger"
 )
 
 // instance states
@@ -89,20 +85,4 @@ type StorageInstance interface {
 
 	Download(name string, data io.Writer) error
 	DownloadFile(name, path string) error
-}
-
-// test tcp connection
-func canConnect(endpoint string) bool {
-
-	conn, err := net.DialTimeout("tcp", endpoint, time.Second)
-	if err != nil {
-		logger.TraceMessage(
-			"Connectivity test to '%s' failed: %s",
-			endpoint, err.Error(),
-		)
-		return false
-	}
-
-	defer conn.Close()
-	return true
 }

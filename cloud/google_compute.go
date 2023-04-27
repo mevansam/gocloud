@@ -11,6 +11,7 @@ import (
 	compute "google.golang.org/api/compute/v1"
 
 	"github.com/mevansam/goutils/logger"
+	"github.com/mevansam/goutils/network"
 	"github.com/mevansam/goutils/utils"
 )
 
@@ -390,9 +391,7 @@ func (c *googleComputeInstance) CanConnect(port int) bool {
 
 	publicIP := c.PublicIP()
 	if publicIP != "" {
-		return canConnect(
-			fmt.Sprintf("%s:%d", publicIP, port),
-		)
+		return network.CanConnect(publicIP, port)
 	} else {
 		return false
 	}

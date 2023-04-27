@@ -14,6 +14,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 
 	"github.com/mevansam/goutils/logger"
+	"github.com/mevansam/goutils/network"
 )
 
 type azureCompute struct {
@@ -444,9 +445,7 @@ func (c *azureComputeInstance) Stop() error {
 func (c *azureComputeInstance) CanConnect(port int) bool {
 
 	if c.publicIP != "" {
-		return canConnect(
-			fmt.Sprintf("%s:%d", c.PublicIP(), port),
-		)
+		return network.CanConnect(c.publicIP, port)
 	} else {
 		return false
 	}
