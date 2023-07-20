@@ -2,9 +2,9 @@ module github.com/mevansam/gocloud
 
 go 1.19
 
-replace github.com/mevansam/goutils => ../goutils
+// replace github.com/mevansam/goutils => ../goutils
 
-replace github.com/mevansam/goforms => ../goforms
+// replace github.com/mevansam/goforms => ../goforms
 
 require (
 	cloud.google.com/go/storage v1.21.0

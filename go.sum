@@ -294,6 +294,10 @@ github.com/mdlayher/netlink v1.6.0 h1:rOHX5yl7qnlpiVkFWoqccueppMtXzeziFjWAjLg6sz
 github.com/mdlayher/netlink v1.6.0/go.mod h1:0o3PlBmGst1xve7wQ7j/hwpNaFaH4qCRyWCdcZk8/vA=
 github.com/mdlayher/socket v0.1.1 h1:q3uOGirUPfAV2MUoaC7BavjQ154J7+JOkTWyiV+intI=
 github.com/mdlayher/socket v0.1.1/go.mod h1:mYV5YIZAfHh4dzDVzI8x8tWLWCliuX8Mon5Awbj+qDs=
+github.com/mevansam/goforms v0.0.1 h1:D1TZ/17frSoqzv8D79QQVpF/IsUBqgil0czeYdJxWZs=
+github.com/mevansam/goforms v0.0.1/go.mod h1:aYb9jMXGk3ghbSKQ5uftX94NrqcN2DIA2EXvTzS9vII=
+github.com/mevansam/goutils v0.0.1 h1:uZE5ws7dg2NARDV3QUXGFQ+t8rzN98of6+O70Pktcig=
+github.com/mevansam/goutils v0.0.1/go.mod h1:t1RYLzprQ51EQRee6fdw0BV4iSMN+u+9AGyI+ES/u2c=
 github.com/mikioh/ipaddr v0.0.0-20190404000644-d465c8ab6721/go.mod h1:Ickgr2WtCLZ2MDGd4Gr0geeCH5HybhRJbonOgQpvSxc=
 github.com/minio/highwayhash v1.0.2 h1:Aak5U0nElisjDCfPSG79Tgzkn2gl66NxOMspRrKnA/g=
 github.com/minio/highwayhash v1.0.2/go.mod h1:BQskDq+xkJ12lmlUUi7U0M5Swg3EWR+dLTk+kldvVxY=
