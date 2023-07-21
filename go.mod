@@ -1,6 +1,6 @@
 module github.com/mevansam/gocloud
 
-go 1.19
+go 1.20
 
 replace github.com/mevansam/goutils => ../goutils
 
@@ -10,8 +10,8 @@ require (
 	cloud.google.com/go/storage v1.21.0
 	github.com/aws/aws-sdk-go v1.43.8
 	github.com/google/uuid v1.3.0
-	github.com/mevansam/goforms v0.0.1
-	github.com/mevansam/goutils v0.0.1
+	github.com/mevansam/goforms v0.0.2
+	github.com/mevansam/goutils v0.0.2
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.18.1
 	google.golang.org/api v0.70.0
